@@ -49,7 +49,9 @@ class HyperbolicLR:
         x = self.iter
         N = self.max_iter
         U = self.upper_bound
-        return self.init_lr + self.delta_lr * (math.sqrt(N - x) / U * (2 - (N + x) / U) - math.sqrt(N / U * (2 - N / U)))
+        return self.init_lr + self.delta_lr * (
+            math.sqrt((N - x) / U * (2 - (N + x) / U)) - math.sqrt(N / U * (2 - N / U))
+        )
 
     def _update_learning_rate(self):
         """
