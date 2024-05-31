@@ -11,16 +11,16 @@ class HyperbolicLR:
         init_lr: Initial learning rate
         remnant: The remnant of the hyperbolic learning rate
     """
-    def __init__(self, optimizer, upper_bound=1000, max_iter=100, init_lr=1e-2, remnant=1e-3):
+    def __init__(self, optimizer, upper_bound=1000, max_iter=100, init_lr=1e-2, infimum_lr=1e-6):
         if upper_bound <= max_iter:
             raise ValueError("upper_bound must be greater than max_iter")
-        elif remnant >= 1:
-            raise ValueError("remnant must be less than 1")
+        elif infimum_lr >= init_lr:
+            raise ValueError("infimum_lr must be less than init_lr")
         self._optimizer = optimizer
         self.upper_bound = upper_bound
         self.max_iter = max_iter
         self.init_lr = init_lr
-        self.min_lr = init_lr * (1 - self.max_iter/self.upper_bound * (1 - remnant))
+        self.delta_lr = init_lr - infimum_lr
         self.iter = 0
 
     def step(self):
@@ -46,11 +46,10 @@ class HyperbolicLR:
         """
         Get the learning rate
         """
-        delta_eta = self.init_lr - self.min_lr
         x = self.iter
         N = self.max_iter
         U = self.upper_bound
-        return self.min_lr + delta_eta * math.sqrt((N - x) / U * (2 - (x + N) / U))
+        return self.init_lr + self.delta_lr * (math.sqrt(N - x) / U * (2 - (N + x) / U) - math.sqrt(N / U * (2 - N / U)))
 
     def _update_learning_rate(self):
         """
