@@ -34,6 +34,12 @@ class HyperbolicLR:
         """
         self._optimizer.zero_grad()
 
+    def get_last_lr(self):
+        """
+        Get the last learning rate
+        """
+        return self._get_lr()
+
     def _get_lr(self):
         """
         Get the learning rate
