@@ -14,6 +14,8 @@ class HyperbolicLR:
     def __init__(self, optimizer, upper_bound=1000, max_iter=100, init_lr=1e-2, remnant=1e-3):
         if upper_bound <= max_iter:
             raise ValueError("upper_bound must be greater than max_iter")
+        elif remnant >= 1:
+            raise ValueError("remnant must be less than 1")
         self._optimizer = optimizer
         self.upper_bound = upper_bound
         self.max_iter = max_iter
