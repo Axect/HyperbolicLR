@@ -36,9 +36,9 @@ class HyperbolicLR:
 
     def get_last_lr(self):
         """
-        Get the last learning rate
+        Get the last learning rates from the inner optimizer
         """
-        return self._get_lr()
+        return [param_group['lr'] for param_group in self._optimizer.param_groups]
 
     def _get_lr(self):
         """
