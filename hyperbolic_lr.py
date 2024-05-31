@@ -9,16 +9,16 @@ class HyperbolicLR:
         upper_bound: Upper bound on various max_iters
         max_iter: Maximum number of iterations
         init_lr: Initial learning rate
-        removal: Removal amount of initial learning rate
+        remnant: The remnant of the hyperbolic learning rate
     """
-    def __init__(self, optimizer, upper_bound=1000, max_iter=100, init_lr=1e-2, removal=0.999):
+    def __init__(self, optimizer, upper_bound=1000, max_iter=100, init_lr=1e-2, remnant=1e-3):
         if upper_bound <= max_iter:
             raise ValueError("upper_bound must be greater than max_iter")
         self._optimizer = optimizer
         self.upper_bound = upper_bound
         self.max_iter = max_iter
         self.init_lr = init_lr
-        self.min_lr = init_lr * (1 - self.max_iter/self.upper_bound * removal)
+        self.min_lr = init_lr * (1 - self.max_iter/self.upper_bound * (1 - remnant))
         self.iter = 0
 
     def step(self):
