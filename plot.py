@@ -4,7 +4,7 @@ import numpy as np
 
 # Prepare Data to Plot
 U = 1000
-N_vec = np.array([250, 500, 750, 995])
+N_vec = np.array([250, 500, 750, 1000])
 eta_init = 1e-2
 eta_infimum = 1e-6
 delta_eta = eta_init - eta_infimum
@@ -47,5 +47,4 @@ with plt.style.context(["science", "nature"]):
     ax.autoscale(tight=True)
     ax.set(**pparam)
     ax.plot(N_vec, eta_grad_vec)
-    ax.legend()
     fig.savefig('plot_grad.png', dpi=600, bbox_inches='tight')
