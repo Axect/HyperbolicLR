@@ -48,3 +48,33 @@ with plt.style.context(["science", "nature"]):
     ax.set(**pparam)
     ax.plot(N_vec, eta_grad_vec)
     fig.savefig('plot_grad.png', dpi=600, bbox_inches='tight')
+
+# Prepare Data to Plot
+U = 1000
+N_vec = np.array([250, 500, 750, 1000])
+eta_init = 1e-2
+eta_infimum = 1e-6
+eta_ratio = eta_init / eta_infimum
+epoch_vec = [np.arange(N) for N in N_vec]
+eta_vec = [
+    eta_init * eta_ratio ** (np.sqrt((N - x) / U * (2 - (N + x) / U)) - np.sqrt(N / U * (2 - N / U)))
+    for x, N in zip(epoch_vec, N_vec)
+]
+
+# Plot params
+pparam = dict(
+    xlabel = r'Epoch',
+    ylabel = r'$\eta$',
+    xscale = 'linear',
+    yscale = 'log',
+)
+
+# Plot
+with plt.style.context(["science", "nature"]):
+    fig, ax = plt.subplots()
+    ax.autoscale(tight=True)
+    ax.set(**pparam)
+    for i in range(len(N_vec)):
+        ax.plot(epoch_vec[i], eta_vec[i], label=f'N = {N_vec[i]}')
+    ax.legend()
+    fig.savefig('plot_eta_exp.png', dpi=600, bbox_inches='tight')
