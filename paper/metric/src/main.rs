@@ -151,27 +151,6 @@ impl LRScheduler for CosineAnnealingLR {
     }
 }
 
-//struct ExponentialLR {
-//    pub init_lr: f64,
-//    pub gamma: f64,
-//}
-//
-//impl RootFindingProblem<1, 1, (f64, f64)> for ExponentialLR {
-//    fn initial_guess(&self) -> (f64, f64) {
-//        (0f64, 100f64)
-//    }
-//
-//    fn function(&self, x: Pt<1>) -> anyhow::Result<Pt<1>> {
-//        Ok([self.get_lr(x[0]) - 0.8 * self.init_lr])
-//    }
-//}
-//
-//impl LRScheduler for ExponentialLR {
-//    fn get_lr(&self, epoch: f64) -> f64 {
-//        self.init_lr * self.gamma.powf(epoch)
-//    }
-//}
-
 struct HyperbolicLR {
     pub init_lr: f64,
     pub infimum_lr: f64,
