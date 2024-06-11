@@ -65,6 +65,10 @@ fn plot_lrs<T: LRScheduler>(lrs: &[T], name: &str) -> anyhow::Result<()> {
         plt.insert_pair((epochs, lrs));
     });
 
+    if name.contains("exp") {
+        plt.set_yscale(PlotScale::Log);
+    }
+
     plt.set_xlabel("Epoch")
         .set_ylabel("Learning Rate")
         .set_legend(legends)
