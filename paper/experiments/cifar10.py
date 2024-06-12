@@ -32,13 +32,13 @@ testloader = DataLoader(testset, batch_size=100, shuffle=False, num_workers=2)
 classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
 # 학습 함수
-def train(model, optimizer, scheduler, num_epochs):
+def train(model, optimizer, scheduler, num_epochs, device):
     wandb.watch(model, log="all")
     for epoch in range(num_epochs):
         model.train()
         train_loss = 0
-        for i, (inputs, labels) in enumerate(trainloader, 0):
-            inputs, labels = inputs.cuda(), labels.cuda()
+        for (inputs, labels) in trainloader:
+            inputs, labels = inputs.to(device), labels.to(device)
             optimizer.zero_grad()
             outputs = model(inputs)
             loss = criterion(outputs, labels)
@@ -48,21 +48,28 @@ def train(model, optimizer, scheduler, num_epochs):
 
         model.eval()
         val_loss = 0
+        correct = 0
+        total = 0
         with torch.no_grad():
             for inputs, labels in testloader:
-                inputs, labels = inputs.cuda(), labels.cuda()
+                inputs, labels = inputs.to(device), labels.to(device)
                 outputs = model(inputs)
                 loss = criterion(outputs, labels)
                 val_loss += loss.item()
+
+                _, predicted = torch.max(outputs.data, 1)
+                total += labels.size(0)
+                correct += (predicted == labels).sum().item()
 
         scheduler.step()
 
         train_loss /= len(trainloader)
         val_loss /= len(testloader)
+        test_acc = 100 * correct / total
         lr = scheduler.get_last_lr()[0]
 
-        wandb.log({"epoch": epoch, "train_loss": train_loss, "val_loss": val_loss, "lr": lr})
-        print(f"Epoch [{epoch+1}/{num_epochs}], Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f}, LR: {lr:.6f}")
+        wandb.log({"epoch": epoch, "train_loss": train_loss, "val_loss": val_loss, "lr": lr, "test_acc": test_acc})
+        print(f"Epoch [{epoch+1}/{num_epochs}], Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f}, LR: {lr:.6f}, Test Acc: {test_acc:.2f}")
 
 
 if __name__ == "__main__":
@@ -116,5 +123,5 @@ if __name__ == "__main__":
             optimizer = optimizer_class(net.parameters(), **optimizer_params[optimizer_name])
             scheduler = scheduler_class(optimizer, **scheduler_params[scheduler_name])
 
-            train(net, optimizer, scheduler, num_epochs)
+            train(net, optimizer, scheduler, num_epochs, device=device)
             wandb.finish()
