@@ -7,6 +7,8 @@ import torchvision.transforms as transforms
 import torchvision.models as models
 from hyperbolic_lr import HyperbolicLR, ExpHyperbolicLR
 import wandb
+import random
+import numpy as np
 
 # Load CIFAR-10 dataset
 transform_train = transforms.Compose([
@@ -65,13 +67,16 @@ def train(model, optimizer, scheduler, num_epochs):
 
 if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = models.resnet18(pretrained=False, num_classes=10)
-    net = model.to(device)
     criterion = nn.CrossEntropyLoss()
 
     optimizers = {
-        "SGD": optim.SGD(net.parameters(), lr=0.1, momentum=0.9, weight_decay=5e-4),
-        "Adam": optim.Adam(net.parameters(), lr=0.001, weight_decay=5e-4),
+        "SGD": optim.SGD,
+        "Adam": optim.Adam,
+    }
+
+    optimizer_params = {
+        "SGD": {"lr": 0.1, "momentum": 0.9, "weight_decay": 5e-4},
+        "Adam": {"lr": 0.001, "betas": (0.9, 0.999), "weight_decay": 5e-4},
     }
 
     schedulers = {
@@ -91,11 +96,25 @@ if __name__ == "__main__":
         "ExpHyperbolicLR": {"upper_bound": 250, "max_iter": num_epochs, "init_lr": 0.1, "infimum_lr": 1e-4},
     }
 
-    for optimizer_name, optimizer in optimizers.items():
+    for optimizer_name, optimizer_class in optimizers.items():
         for scheduler_name, scheduler_class in schedulers.items():
+            # Fix seed for reproducibility
+            seed = 71 # from random.org
+            torch.manual_seed(seed)
+            random.seed(seed)
+            np.random.seed(seed)
+            torch.backends.cudnn.deterministic = True
+            torch.cuda.manual_seed_all(seed)
+
             run_name = f"{optimizer_name}_{scheduler_name}"
+
+            model = models.resnet18(pretrained=False, num_classes=10)
+            net = model.to(device)
+
             wandb.init(project="cifar10-classification", name=run_name)
-            scheduler_kwargs = scheduler_params[scheduler_name]
-            scheduler = scheduler_class(optimizer, **scheduler_kwargs)
+
+            optimizer = optimizer_class(net.parameters(), **optimizer_params[optimizer_name])
+            scheduler = scheduler_class(optimizer, **scheduler_params[scheduler_name])
+
             train(net, optimizer, scheduler, num_epochs)
             wandb.finish()
