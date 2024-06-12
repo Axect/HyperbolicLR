@@ -27,7 +27,7 @@ trainset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True
 trainloader = DataLoader(trainset, batch_size=256, shuffle=True, num_workers=2)
 
 testset = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform_test)
-testloader = DataLoader(testset, batch_size=100, shuffle=False, num_workers=2)
+testloader = DataLoader(testset, batch_size=256, shuffle=False, num_workers=2)
 
 classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
@@ -83,7 +83,7 @@ if __name__ == "__main__":
 
     optimizer_params = {
         "SGD": {"lr": 0.1, "momentum": 0.9, "weight_decay": 5e-4},
-        "Adam": {"lr": 0.001, "betas": (0.9, 0.999), "weight_decay": 5e-4},
+        "Adam": {"lr": 0.01, "betas": (0.9, 0.999), "weight_decay": 5e-4},
     }
 
     schedulers = {
