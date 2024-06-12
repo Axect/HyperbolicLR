@@ -89,6 +89,7 @@ if __name__ == "__main__":
     schedulers = {
         "PolynomialLR": optim.lr_scheduler.PolynomialLR,
         "CosineAnnealingLR": optim.lr_scheduler.CosineAnnealingLR,
+        "ExponentialLR": optim.lr_scheduler.ExponentialLR,
         "HyperbolicLR": HyperbolicLR,
         "ExpHyperbolicLR": ExpHyperbolicLR,
     }
