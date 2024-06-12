@@ -22,7 +22,7 @@ transform_test = transforms.Compose([
 ])
 
 trainset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform_train)
-trainloader = DataLoader(trainset, batch_size=128, shuffle=True, num_workers=2)
+trainloader = DataLoader(trainset, batch_size=256, shuffle=True, num_workers=2)
 
 testset = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform_test)
 testloader = DataLoader(testset, batch_size=100, shuffle=False, num_workers=2)
@@ -84,9 +84,9 @@ if __name__ == "__main__":
     num_epochs = 100
 
     scheduler_params = {
-        "PolynomialLR": {"power": 0.9, "total_iters": num_epochs},
+        "PolynomialLR": {"power": 0.5, "total_iters": num_epochs},
         "CosineAnnealingLR": {"T_max": num_epochs, "eta_min": 1e-4},
-        "ExponentialLR": {"gamma": 0.9},
+        "ExponentialLR": {"gamma": 0.95},
         "HyperbolicLR": {"upper_bound": 250, "max_iter": num_epochs, "init_lr": 0.1, "infimum_lr": 1e-4},
         "ExpHyperbolicLR": {"upper_bound": 250, "max_iter": num_epochs, "init_lr": 0.1, "infimum_lr": 1e-4},
     }
