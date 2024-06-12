@@ -9,6 +9,7 @@ from hyperbolic_lr import HyperbolicLR, ExpHyperbolicLR
 import wandb
 import random
 import numpy as np
+import survey
 
 # Load CIFAR-10 dataset
 transform_train = transforms.Compose([
@@ -73,7 +74,21 @@ def train(model, optimizer, scheduler, num_epochs, device):
 
 
 if __name__ == "__main__":
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # Device
+    device_count = torch.cuda.device_count()
+    if device_count > 1:
+        options = [f"cuda:{i}" for i in range(device_count)] + ["cpu"]
+        device = survey.routines.select(
+            "Select device",
+            options=options
+        )
+        device = options[device]
+    elif device_count == 1:
+        device = "cuda:0"
+    else:
+        device = "cpu"
+    print(device)
+
     criterion = nn.CrossEntropyLoss()
 
     optimizers = {

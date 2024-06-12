@@ -107,6 +107,7 @@ six==1.16.0
     #   python-dateutil
 smmap==5.0.1
     # via gitdb
+survey==5.3.0
 sympy==1.12.1
     # via torch
 torch==2.3.1
