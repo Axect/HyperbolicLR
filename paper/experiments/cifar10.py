@@ -95,11 +95,13 @@ if __name__ == "__main__":
     optimizers = {
         "SGD": optim.SGD,
         "Adam": optim.Adam,
+        "AdamW": optim.AdamW,
     }
 
     optimizer_params = {
         "SGD": {"lr": 0.1, "momentum": 0.9, "weight_decay": 5e-4},
-        "Adam": {"lr": 0.01, "betas": (0.9, 0.999), "weight_decay": 5e-4},
+        "Adam": {"lr": 0.01},
+        "AdamW": {"lr": 0.01, "betas": (0.85, 0.98)},
     }
 
     schedulers = {
@@ -120,14 +122,16 @@ if __name__ == "__main__":
         "ExpHyperbolicLR": {"upper_bound": 250, "max_iter": num_epochs, "init_lr": 0.1, "infimum_lr": 1e-4},
     }
 
-    def adjust_params_for_adam(scheduler_name, params):
-        adjusted_params = params.copy()
-        if scheduler_name in ["HyperbolicLR", "ExpHyperbolicLR"]:
-            adjusted_params["init_lr"] = params["init_lr"] / 10
-            adjusted_params["infimum_lr"] = params["infimum_lr"] / 10
-        elif scheduler_name == "CosineAnnealingLR":
-            adjusted_params["eta_min"] = params["eta_min"] / 10
-        return adjusted_params
+    def adjust_params_for_adam(scheduler_name, params, optimizer_name):
+        if optimizer_name in ["Adam", "AdamW"]:
+            adjusted_params = params.copy()
+            if scheduler_name in ["HyperbolicLR", "ExpHyperbolicLR"]:
+                adjusted_params["init_lr"] = params["init_lr"] / 10
+                adjusted_params["infimum_lr"] = params["infimum_lr"] / 10
+            elif scheduler_name == "CosineAnnealingLR":
+                adjusted_params["eta_min"] = params["eta_min"] / 10
+            return adjusted_params
+        return params
 
     for optimizer_name, optimizer_class in optimizers.items():
         for scheduler_name, scheduler_class in schedulers.items():
@@ -147,7 +151,7 @@ if __name__ == "__main__":
             wandb.init(project="cifar10-classification", name=run_name)
 
             optimizer = optimizer_class(net.parameters(), **optimizer_params[optimizer_name])
-            scheduler_param = adjust_params_for_adam(scheduler_name, scheduler_params[scheduler_name]) if optimizer_name == "Adam" else scheduler_params[scheduler_name]
+            scheduler_param = adjust_params_for_adam(scheduler_name, scheduler_params[scheduler_name], optimizer_name)
 
             scheduler = scheduler_class(optimizer, **scheduler_param)
 
