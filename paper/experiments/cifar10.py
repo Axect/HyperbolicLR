@@ -146,7 +146,7 @@ if __name__ == "__main__":
 
         run_name = f"{optimizer_name}_NoScheduler"
 
-        model = models.vgg16(pretrained=False, num_classes=10)
+        model = models.mobilenet_v2(pretrained=False, num_classes=10)
         net = model.to(device)
 
         wandb.init(project="cifar10-classification", name=run_name)
@@ -169,7 +169,7 @@ if __name__ == "__main__":
 
             run_name = f"{optimizer_name}_{scheduler_name}"
 
-            model = models.vgg16(pretrained=False, num_classes=10)
+            model = models.mobilenet_v2(pretrained=False, num_classes=10)
             net = model.to(device)
 
             wandb.init(project="cifar10-classification", name=run_name)
