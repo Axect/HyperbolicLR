@@ -112,14 +112,14 @@ if __name__ == "__main__":
         "ExpHyperbolicLR": ExpHyperbolicLR,
     }
 
-    num_epochs = 100
+    num_epochs = 50
 
     scheduler_params = {
         "PolynomialLR": {"power": 0.5, "total_iters": num_epochs},
         "CosineAnnealingLR": {"T_max": num_epochs, "eta_min": 1e-4},
-        "ExponentialLR": {"gamma": 0.95},
-        "HyperbolicLR": {"upper_bound": 250, "max_iter": num_epochs, "init_lr": 0.1, "infimum_lr": 1e-4},
-        "ExpHyperbolicLR": {"upper_bound": 250, "max_iter": num_epochs, "init_lr": 0.1, "infimum_lr": 1e-4},
+        "ExponentialLR": {"gamma": 0.9},
+        "HyperbolicLR": {"upper_bound": 150, "max_iter": num_epochs, "init_lr": 0.1, "infimum_lr": 1e-3},
+        "ExpHyperbolicLR": {"upper_bound": 150, "max_iter": num_epochs, "init_lr": 0.1, "infimum_lr": 1e-3},
     }
 
     def adjust_params_for_adam(scheduler_name, params, optimizer_name):
