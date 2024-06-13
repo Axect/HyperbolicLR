@@ -32,7 +32,7 @@ testloader = DataLoader(testset, batch_size=256, shuffle=False, num_workers=2)
 
 classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
-# 학습 함수
+# Train function
 def train(model, optimizer, scheduler, num_epochs, device):
     wandb.watch(model, log="all")
     for epoch in range(num_epochs):
@@ -73,6 +73,7 @@ def train(model, optimizer, scheduler, num_epochs, device):
         print(f"Epoch [{epoch+1}/{num_epochs}], Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f}, LR: {lr:.6f}, Test Acc: {test_acc:.2f}")
 
 
+# Main
 if __name__ == "__main__":
     # Device
     device_count = torch.cuda.device_count()
@@ -119,6 +120,15 @@ if __name__ == "__main__":
         "ExpHyperbolicLR": {"upper_bound": 250, "max_iter": num_epochs, "init_lr": 0.1, "infimum_lr": 1e-4},
     }
 
+    def adjust_params_for_adam(scheduler_name, params):
+        adjusted_params = params.copy()
+        if scheduler_name in ["HyperbolicLR", "ExpHyperbolicLR"]:
+            adjusted_params["init_lr"] = params["init_lr"] / 10
+            adjusted_params["infimum_lr"] = params["infimum_lr"] / 10
+        elif scheduler_name == "CosineAnnealingLR":
+            adjusted_params["eta_min"] = params["eta_min"] / 10
+        return adjusted_params
+
     for optimizer_name, optimizer_class in optimizers.items():
         for scheduler_name, scheduler_class in schedulers.items():
             # Fix seed for reproducibility
@@ -137,6 +147,8 @@ if __name__ == "__main__":
             wandb.init(project="cifar10-classification", name=run_name)
 
             optimizer = optimizer_class(net.parameters(), **optimizer_params[optimizer_name])
+            scheduler_param = adjust_params_for_adam(scheduler_name, scheduler_params[scheduler_name]) if optimizer_name == "Adam" else scheduler_params[scheduler_name]
+
             scheduler = scheduler_class(optimizer, **scheduler_params[scheduler_name])
 
             train(net, optimizer, scheduler, num_epochs, device=device)
