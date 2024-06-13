@@ -113,14 +113,17 @@ if __name__ == "__main__":
         "ExpHyperbolicLR": ExpHyperbolicLR,
     }
 
-    num_epochs = 50
+    num_epochs = survey.routines.numeric(
+        "Number of epochs",
+        decimal=False,
+    )
 
     scheduler_params = {
         "PolynomialLR": {"power": 0.5, "total_iters": num_epochs},
         "CosineAnnealingLR": {"T_max": num_epochs, "eta_min": 1e-4},
-        "ExponentialLR": {"gamma": 0.9},
-        "HyperbolicLR": {"upper_bound": 150, "max_iter": num_epochs, "init_lr": 0.1, "infimum_lr": 1e-4},
-        "ExpHyperbolicLR": {"upper_bound": 150, "max_iter": num_epochs, "init_lr": 0.1, "infimum_lr": 1e-4},
+        "ExponentialLR": {"gamma": 0.95},
+        "HyperbolicLR": {"upper_bound": 250, "max_iter": num_epochs, "init_lr": 0.1, "infimum_lr": 1e-4},
+        "ExpHyperbolicLR": {"upper_bound": 250, "max_iter": num_epochs, "init_lr": 0.1, "infimum_lr": 1e-4},
     }
 
     def adjust_params_for_adam(scheduler_name, params, optimizer_name):
@@ -134,51 +137,57 @@ if __name__ == "__main__":
             return adjusted_params
         return params
 
+    # Seeds
+    seeds = [42, 178, 392, 350, 846] # from random.org
+
     # Training without LR scheduler
     for optimizer_name, optimizer_class in optimizers.items():
-        # Fix seed for reproducibility
-        seed = 71 # from random.org
-        torch.manual_seed(seed)
-        random.seed(seed)
-        np.random.seed(seed)
-        torch.backends.cudnn.deterministic = True
-        torch.cuda.manual_seed_all(seed)
-
-        run_name = f"{optimizer_name}_NoScheduler"
-
-        model = models.mobilenet_v2(pretrained=False, num_classes=10)
-        net = model.to(device)
-
-        wandb.init(project="cifar10-classification", name=run_name)
-
-        optimizer = optimizer_class(net.parameters(), **optimizer_params[optimizer_name])
-
-        train(net, optimizer, None, num_epochs, device=device)
-        wandb.finish()
-
-    # Training with LR scheduler
-    for optimizer_name, optimizer_class in optimizers.items():
-        for scheduler_name, scheduler_class in schedulers.items():
+        for seed in seeds:
             # Fix seed for reproducibility
-            seed = 71 # from random.org
             torch.manual_seed(seed)
             random.seed(seed)
             np.random.seed(seed)
             torch.backends.cudnn.deterministic = True
             torch.cuda.manual_seed_all(seed)
 
-            run_name = f"{optimizer_name}_{scheduler_name}"
+            group_name = f"{optimizer_name}_NoScheduler"
+            run_name = f"{group_name}[{seed}]"
 
-            model = models.mobilenet_v2(pretrained=False, num_classes=10)
+            #model = models.mobilenet_v2(pretrained=False, num_classes=10)
+            model = models.mobilenet_v3_small(pretrained=False, num_classes=10)
             net = model.to(device)
 
-            wandb.init(project="cifar10-classification", name=run_name)
+            wandb.init(project="HyperbolicLR-CIFAR10", name=run_name, group=group_name)
 
             optimizer = optimizer_class(net.parameters(), **optimizer_params[optimizer_name])
-            scheduler_param = adjust_params_for_adam(scheduler_name, scheduler_params[scheduler_name], optimizer_name)
 
-            scheduler = scheduler_class(optimizer, **scheduler_param)
-
-            train(net, optimizer, scheduler, num_epochs, device=device)
+            train(net, optimizer, None, num_epochs, device=device)
             wandb.finish()
+
+    # Training with LR scheduler
+    for optimizer_name, optimizer_class in optimizers.items():
+        for scheduler_name, scheduler_class in schedulers.items():
+            for seed in seeds:
+                # Fix seed for reproducibility
+                torch.manual_seed(seed)
+                random.seed(seed)
+                np.random.seed(seed)
+                torch.backends.cudnn.deterministic = True
+                torch.cuda.manual_seed_all(seed)
+
+                group_name = f"{optimizer_name}_{scheduler_name}"
+                run_name = f"{group_name}[{seed}]"
+
+                model = models.mobilenet_v2(pretrained=False, num_classes=10)
+                net = model.to(device)
+
+                wandb.init(project="HyperbolicLR-CIFAR10", name=run_name, group=group_name)
+
+                optimizer = optimizer_class(net.parameters(), **optimizer_params[optimizer_name])
+                scheduler_param = adjust_params_for_adam(scheduler_name, scheduler_params[scheduler_name], optimizer_name)
+
+                scheduler = scheduler_class(optimizer, **scheduler_param)
+
+                train(net, optimizer, scheduler, num_epochs, device=device)
+                wandb.finish()
 
