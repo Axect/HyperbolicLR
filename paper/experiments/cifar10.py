@@ -100,9 +100,9 @@ if __name__ == "__main__":
     }
 
     optimizer_params = {
-        "SGD": {"lr": 0.01, "momentum": 0.9, "weight_decay": 5e-4},
-        "Adam": {"lr": 1e-4},
-        "AdamW": {"lr": 1e-4, "betas": (0.85, 0.98)},
+        "SGD": {"lr": 0.1, "momentum": 0.9, "weight_decay": 5e-4},
+        "Adam": {"lr": 1e-2},
+        "AdamW": {"lr": 1e-2, "betas": (0.85, 0.98)},
     }
 
     schedulers = {
@@ -119,18 +119,18 @@ if __name__ == "__main__":
         "PolynomialLR": {"power": 0.5, "total_iters": num_epochs},
         "CosineAnnealingLR": {"T_max": num_epochs, "eta_min": 1e-4},
         "ExponentialLR": {"gamma": 0.9},
-        "HyperbolicLR": {"upper_bound": 150, "max_iter": num_epochs, "init_lr": 0.01, "infimum_lr": 1e-4},
-        "ExpHyperbolicLR": {"upper_bound": 150, "max_iter": num_epochs, "init_lr": 0.01, "infimum_lr": 1e-4},
+        "HyperbolicLR": {"upper_bound": 150, "max_iter": num_epochs, "init_lr": 0.1, "infimum_lr": 1e-4},
+        "ExpHyperbolicLR": {"upper_bound": 150, "max_iter": num_epochs, "init_lr": 0.1, "infimum_lr": 1e-4},
     }
 
     def adjust_params_for_adam(scheduler_name, params, optimizer_name):
         if optimizer_name in ["Adam", "AdamW"]:
             adjusted_params = params.copy()
             if scheduler_name in ["HyperbolicLR", "ExpHyperbolicLR"]:
-                adjusted_params["init_lr"] = params["init_lr"] / 100
-                adjusted_params["infimum_lr"] = params["infimum_lr"] / 100
+                adjusted_params["init_lr"] = params["init_lr"] / 10
+                adjusted_params["infimum_lr"] = params["infimum_lr"] / 10
             elif scheduler_name == "CosineAnnealingLR":
-                adjusted_params["eta_min"] = params["eta_min"] / 100
+                adjusted_params["eta_min"] = params["eta_min"] / 10
             return adjusted_params
         return params
 
