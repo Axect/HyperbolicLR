@@ -101,8 +101,8 @@ if __name__ == "__main__":
 
     optimizer_params = {
         "SGD": {"lr": 0.01, "momentum": 0.9, "weight_decay": 5e-4},
-        "Adam": {"lr": 0.001},
-        "AdamW": {"lr": 0.001, "betas": (0.85, 0.98)},
+        "Adam": {"lr": 1e-4},
+        "AdamW": {"lr": 1e-4, "betas": (0.85, 0.98)},
     }
 
     schedulers = {
@@ -127,10 +127,10 @@ if __name__ == "__main__":
         if optimizer_name in ["Adam", "AdamW"]:
             adjusted_params = params.copy()
             if scheduler_name in ["HyperbolicLR", "ExpHyperbolicLR"]:
-                adjusted_params["init_lr"] = params["init_lr"] / 10
-                adjusted_params["infimum_lr"] = params["infimum_lr"] / 10
+                adjusted_params["init_lr"] = params["init_lr"] / 100
+                adjusted_params["infimum_lr"] = params["infimum_lr"] / 100
             elif scheduler_name == "CosineAnnealingLR":
-                adjusted_params["eta_min"] = params["eta_min"] / 10
+                adjusted_params["eta_min"] = params["eta_min"] / 100
             return adjusted_params
         return params
 
