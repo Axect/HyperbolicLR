@@ -149,7 +149,7 @@ if __name__ == "__main__":
             optimizer = optimizer_class(net.parameters(), **optimizer_params[optimizer_name])
             scheduler_param = adjust_params_for_adam(scheduler_name, scheduler_params[scheduler_name]) if optimizer_name == "Adam" else scheduler_params[scheduler_name]
 
-            scheduler = scheduler_class(optimizer, **scheduler_params[scheduler_name])
+            scheduler = scheduler_class(optimizer, **scheduler_param)
 
             train(net, optimizer, scheduler, num_epochs, device=device)
             wandb.finish()
