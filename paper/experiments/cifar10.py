@@ -62,12 +62,13 @@ def train(model, optimizer, scheduler, num_epochs, device):
                 total += labels.size(0)
                 correct += (predicted == labels).sum().item()
 
-        scheduler.step()
+        if scheduler is not None:
+            scheduler.step()
 
         train_loss /= len(trainloader)
         val_loss /= len(testloader)
         test_acc = 100 * correct / total
-        lr = scheduler.get_last_lr()[0]
+        lr = optimizer.param_groups[0]['lr']
 
         wandb.log({"epoch": epoch, "train_loss": train_loss, "val_loss": val_loss, "lr": lr, "test_acc": test_acc})
         print(f"Epoch [{epoch+1}/{num_epochs}], Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f}, LR: {lr:.6f}, Test Acc: {test_acc:.2f}")
@@ -133,6 +134,29 @@ if __name__ == "__main__":
             return adjusted_params
         return params
 
+    # Training without LR scheduler
+    for optimizer_name, optimizer_class in optimizers.items():
+        # Fix seed for reproducibility
+        seed = 71 # from random.org
+        torch.manual_seed(seed)
+        random.seed(seed)
+        np.random.seed(seed)
+        torch.backends.cudnn.deterministic = True
+        torch.cuda.manual_seed_all(seed)
+
+        run_name = f"{optimizer_name}_NoScheduler"
+
+        model = models.vgg16(pretrained=False, num_classes=10)
+        net = model.to(device)
+
+        wandb.init(project="cifar10-classification", name=run_name)
+
+        optimizer = optimizer_class(net.parameters(), **optimizer_params[optimizer_name])
+
+        train(net, optimizer, None, num_epochs, device=device)
+        wandb.finish()
+
+    # Training with LR scheduler
     for optimizer_name, optimizer_class in optimizers.items():
         for scheduler_name, scheduler_class in schedulers.items():
             # Fix seed for reproducibility
@@ -145,7 +169,7 @@ if __name__ == "__main__":
 
             run_name = f"{optimizer_name}_{scheduler_name}"
 
-            model = models.resnet18(pretrained=False, num_classes=10)
+            model = models.vgg16(pretrained=False, num_classes=10)
             net = model.to(device)
 
             wandb.init(project="cifar10-classification", name=run_name)
@@ -157,3 +181,4 @@ if __name__ == "__main__":
 
             train(net, optimizer, scheduler, num_epochs, device=device)
             wandb.finish()
+
