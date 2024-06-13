@@ -100,9 +100,9 @@ if __name__ == "__main__":
     }
 
     optimizer_params = {
-        "SGD": {"lr": 8e-2, "momentum": 0.9, "weight_decay": 5e-4},
-        "Adam": {"lr": 8e-3},
-        "AdamW": {"lr": 8e-3, "betas": (0.85, 0.98)},
+        "SGD": {"lr": 1e-2, "momentum": 0.9, "weight_decay": 5e-4},
+        "Adam": {"lr": 1e-3},
+        "AdamW": {"lr": 1e-3, "betas": (0.85, 0.98)},
     }
 
     schedulers = {
@@ -122,8 +122,8 @@ if __name__ == "__main__":
         "PolynomialLR": {"power": 0.5, "total_iters": num_epochs},
         "CosineAnnealingLR": {"T_max": num_epochs, "eta_min": 1e-4},
         "ExponentialLR": {"gamma": 0.95},
-        "HyperbolicLR": {"upper_bound": 250, "max_iter": num_epochs, "init_lr": 8e-2, "infimum_lr": 8e-4},
-        "ExpHyperbolicLR": {"upper_bound": 250, "max_iter": num_epochs, "init_lr": 8e-2, "infimum_lr": 8e-4},
+        "HyperbolicLR": {"upper_bound": 250, "max_iter": num_epochs, "init_lr": 1e-2, "infimum_lr": 1e-5},
+        "ExpHyperbolicLR": {"upper_bound": 250, "max_iter": num_epochs, "init_lr": 1e-2, "infimum_lr": 1e-5},
     }
 
     def adjust_params_for_adam(scheduler_name, params, optimizer_name):
