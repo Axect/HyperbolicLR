@@ -154,7 +154,7 @@ if __name__ == "__main__":
             run_name = f"{group_name}[{seed}]"
 
             #model = models.mobilenet_v2(pretrained=False, num_classes=10)
-            model = models.mobilenet_v3_small(pretrained=False, num_classes=10)
+            model = models.mobilenet_v3_large(pretrained=False, num_classes=10)
             net = model.to(device)
 
             wandb.init(project="HyperbolicLR-CIFAR10", name=run_name, group=group_name)
