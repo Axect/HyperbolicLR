@@ -181,7 +181,7 @@ if __name__ == "__main__":
                 torch.backends.cudnn.deterministic = True
                 torch.cuda.manual_seed_all(seed)
 
-                group_name = f"{optimizer_name}_{scheduler_name}"
+                group_name = f"{optimizer_name}_NoScheduler({num_epochs})"
                 run_name = f"{group_name}[{seed}]"
 
                 model = models.mobilenet_v2(pretrained=False, num_classes=10)
