@@ -161,6 +161,9 @@ class CNNHyperparameterSearch:
                     param_dict = dict(zip(self.cnn_param_space.keys(), params))
                     accuracies = []
                     
+                    # Create a shortened name for the CNN configuration
+                    cnn_config = f"C{param_dict['num_conv_layers']}F{param_dict['num_fc_layers']}_Ch{param_dict['conv_channels']}_FC{param_dict['fc_units']}"
+                    
                     seed_progress = progress.add_task(f"[cyan]Seeds", total=len(seeds))
                     
                     for seed in seeds:
@@ -169,7 +172,7 @@ class CNNHyperparameterSearch:
                         np.random.seed(seed)
                         torch.backends.cudnn.deterministic = True
                         torch.cuda.manual_seed_all(seed)
-
+    
                         model = SimpleCNN(**param_dict)
                         optimizer = optim.AdamW(model.parameters(), lr=self.hparams["learning_rate"])
                         
@@ -187,8 +190,8 @@ class CNNHyperparameterSearch:
                         run = wandb.init(
                             project=project_name,
                             config={"scheduler": scheduler_name, "epochs": epochs, **param_dict, **self.hparams},
-                            name=f"{scheduler_name}_{epochs}_epochs_seed{seed}",
-                            group=f"{scheduler_name}_{epochs}_epochs"
+                            name=f"{scheduler_name}_{epochs}ep_{cnn_config}_seed{seed}",
+                            group=f"{scheduler_name}_{epochs}ep_{cnn_config}"
                         )
                         
                         accuracy = self.train_and_evaluate(model, optimizer, scheduler, epochs, device, run)
