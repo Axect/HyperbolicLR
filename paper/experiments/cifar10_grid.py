@@ -44,17 +44,19 @@ class SimpleCNN(nn.Module):
             x = layer(x)
         return x
 
-class LRSchedulerSearch:
+class CNNHyperparameterSearch:
     def __init__(self, batch_size, epochs, lr, infimum_lr):
         self.hparams = {
             "learning_rate": lr,
             "batch_size": batch_size,
             "epochs": epochs,
             "infimum_lr": infimum_lr,
-            "num_conv_layers": 3,
-            "num_fc_layers": 2,
-            "conv_channels": 64,
-            "fc_units": 128
+        }
+        self.cnn_param_space = {
+            "num_conv_layers": [2, 3, 4],
+            "num_fc_layers": [1, 2, 3],
+            "conv_channels": [32, 64, 128],
+            "fc_units": [64, 128, 256]
         }
         self.schedulers = {
             "PolynomialLR": optim.lr_scheduler.PolynomialLR,
@@ -63,12 +65,12 @@ class LRSchedulerSearch:
             "HyperbolicLR": HyperbolicLR,
             "ExpHyperbolicLR": ExpHyperbolicLR,
         }
-        self.param_space = {
-            "PolynomialLR": {"power": [0.5, 1.0, 1.5]},
-            "CosineAnnealingLR": {"eta_min": [1e-5, 1e-4, 1e-3]},
-            "ExponentialLR": {"gamma": [0.9, 0.95, 0.99]},
-            "HyperbolicLR": {"upper_bound": [100, 250, 500], "infimum_lr": [1e-5, 1e-4, 1e-3]},
-            "ExpHyperbolicLR": {"upper_bound": [100, 250, 500], "infimum_lr": [1e-5, 1e-4, 1e-3]},
+        self.scheduler_params = {
+            "PolynomialLR": {"power": 0.9},
+            "CosineAnnealingLR": {"eta_min": 1e-4},
+            "ExponentialLR": {"gamma": 0.95},
+            "HyperbolicLR": {"upper_bound": 250, "infimum_lr": infimum_lr},
+            "ExpHyperbolicLR": {"upper_bound": 250, "infimum_lr": infimum_lr},
         }
         self.dataloader()
 
@@ -141,22 +143,22 @@ class LRSchedulerSearch:
         
         return accuracy
 
-    def grid_search(self, scheduler_name, param_space, epochs_list, seeds, device, project_name):
+    def grid_search(self, scheduler_name, epochs_list, seeds, device, project_name):
         results = {}
         progress = Progress()
         
         with progress:
-            total_progress = progress.add_task(f"[green]Searching {scheduler_name}", total=len(epochs_list))
+            total_progress = progress.add_task(f"[green]Searching with {scheduler_name}", total=len(epochs_list))
             
             for epochs in epochs_list:
                 self.hparams["epochs"] = epochs
                 best_accuracy = 0
                 best_params = None
                 
-                param_progress = progress.add_task(f"[blue]Parameters for {epochs} epochs", total=len(list(itertools.product(*param_space.values()))))
+                param_progress = progress.add_task(f"[blue]CNN parameters for {epochs} epochs", total=len(list(itertools.product(*self.cnn_param_space.values()))))
                 
-                for params in itertools.product(*param_space.values()):
-                    param_dict = dict(zip(param_space.keys(), params))
+                for params in itertools.product(*self.cnn_param_space.values()):
+                    param_dict = dict(zip(self.cnn_param_space.keys(), params))
                     accuracies = []
                     
                     seed_progress = progress.add_task(f"[cyan]Seeds", total=len(seeds))
@@ -168,18 +170,19 @@ class LRSchedulerSearch:
                         torch.backends.cudnn.deterministic = True
                         torch.cuda.manual_seed_all(seed)
 
-                        model = SimpleCNN(**{k: self.hparams[k] for k in ['num_conv_layers', 'num_fc_layers', 'conv_channels', 'fc_units']})
+                        model = SimpleCNN(**param_dict)
                         optimizer = optim.AdamW(model.parameters(), lr=self.hparams["learning_rate"])
                         
+                        scheduler_params = self.scheduler_params[scheduler_name].copy()
                         if scheduler_name in ["HyperbolicLR", "ExpHyperbolicLR"]:
-                            param_dict["max_iter"] = epochs
-                            param_dict["init_lr"] = self.hparams["learning_rate"]
+                            scheduler_params["max_iter"] = epochs
+                            scheduler_params["init_lr"] = self.hparams["learning_rate"]
                         elif scheduler_name == "PolynomialLR":
-                            param_dict["total_iters"] = epochs
+                            scheduler_params["total_iters"] = epochs
                         elif scheduler_name == "CosineAnnealingLR":
-                            param_dict["T_max"] = epochs
+                            scheduler_params["T_max"] = epochs
                         
-                        scheduler = self.schedulers[scheduler_name](optimizer, **param_dict)
+                        scheduler = self.schedulers[scheduler_name](optimizer, **scheduler_params)
                         
                         run = wandb.init(
                             project=project_name,
@@ -213,8 +216,8 @@ class LRSchedulerSearch:
     def search(self, seeds, project_name, device):
         epochs_list = [50, 100, 200]
         
-        for scheduler_name, param_space in self.param_space.items():
-            results = self.grid_search(scheduler_name, param_space, epochs_list, seeds, device, project_name)
+        for scheduler_name in self.schedulers.keys():
+            results = self.grid_search(scheduler_name, epochs_list, seeds, device, project_name)
             
             # Save results locally
             if not os.path.exists(project_name):
@@ -232,7 +235,7 @@ def main():
     # Seeds from random.org
     seeds = [563, 351, 445, 688, 261]
 
-    project_name = "CIFAR-LRSearch"
+    project_name = "CNNHyperparameterSearch"
 
     # Define common hyperparameters
     batch_size = survey.routines.numeric(
@@ -258,8 +261,8 @@ def main():
     else:
         device = "cpu"
 
-    search_model = LRSchedulerSearch(batch_size, epochs, learning_rate, infimum_lr)
-    search_model.search(seeds[:5], project_name, device)
+    search_model = CNNHyperparameterSearch(batch_size, epochs, learning_rate, infimum_lr)
+    search_model.search(seeds, project_name, device)
 
 if __name__ == "__main__":
     main()
