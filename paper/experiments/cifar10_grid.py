@@ -54,9 +54,9 @@ class CNNHyperparameterSearch:
         }
         self.cnn_param_space = {
             "num_conv_layers": [2, 3, 4],
-            "num_fc_layers": [1, 2, 3],
+            "num_fc_layers": [2, 3, 4],
             "conv_channels": [32, 64, 128],
-            "fc_units": [64, 128, 256]
+            "fc_units": [128, 256, 512]
         }
         self.schedulers = {
             "PolynomialLR": optim.lr_scheduler.PolynomialLR,
