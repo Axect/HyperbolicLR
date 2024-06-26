@@ -91,12 +91,13 @@ class LRSchedulerSearch:
         testset = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform_test)
         self.testloader = DataLoader(testset, batch_size=self.hparams["batch_size"], shuffle=False, num_workers=2)
 
-    def train_and_evaluate(self, model, optimizer, scheduler, epochs, device):
+    def train_and_evaluate(self, model, optimizer, scheduler, epochs, device, run):
         criterion = nn.CrossEntropyLoss()
         model.to(device)
         
         for epoch in range(epochs):
             model.train()
+            train_loss = 0.0
             for inputs, labels in self.trainloader:
                 inputs, labels = inputs.to(device), labels.to(device)
                 optimizer.zero_grad()
@@ -104,22 +105,43 @@ class LRSchedulerSearch:
                 loss = criterion(outputs, labels)
                 loss.backward()
                 optimizer.step()
+                train_loss += loss.item()
+            
+            train_loss /= len(self.trainloader)
+            
+            model.eval()
+            val_loss = 0.0
+            correct = 0
+            total = 0
+            with torch.no_grad():
+                for inputs, labels in self.testloader:
+                    inputs, labels = inputs.to(device), labels.to(device)
+                    outputs = model(inputs)
+                    loss = criterion(outputs, labels)
+                    val_loss += loss.item()
+                    _, predicted = torch.max(outputs.data, 1)
+                    total += labels.size(0)
+                    correct += (predicted == labels).sum().item()
+            
+            val_loss /= len(self.testloader)
+            accuracy = correct / total
+            
+            current_lr = scheduler.get_last_lr()[0] if hasattr(scheduler, 'get_last_lr') else optimizer.param_groups[0]['lr']
+            
+            # Log metrics
+            run.log({
+                "epoch": epoch,
+                "train_loss": train_loss,
+                "val_loss": val_loss,
+                "accuracy": accuracy,
+                "learning_rate": current_lr
+            })
+            
             scheduler.step()
-
-        model.eval()
-        correct = 0
-        total = 0
-        with torch.no_grad():
-            for inputs, labels in self.testloader:
-                inputs, labels = inputs.to(device), labels.to(device)
-                outputs = model(inputs)
-                _, predicted = torch.max(outputs.data, 1)
-                total += labels.size(0)
-                correct += (predicted == labels).sum().item()
         
-        return correct / total
+        return accuracy
 
-    def grid_search(self, scheduler_name, param_space, epochs_list, seeds, device):
+    def grid_search(self, scheduler_name, param_space, epochs_list, seeds, device, project_name):
         results = {}
         progress = Progress()
         
@@ -159,8 +181,17 @@ class LRSchedulerSearch:
                         
                         scheduler = self.schedulers[scheduler_name](optimizer, **param_dict)
                         
-                        accuracy = self.train_and_evaluate(model, optimizer, scheduler, epochs, device)
+                        run = wandb.init(
+                            project=project_name,
+                            config={"scheduler": scheduler_name, "epochs": epochs, **param_dict, **self.hparams},
+                            name=f"{scheduler_name}_{epochs}_epochs_seed{seed}",
+                            group=f"{scheduler_name}_{epochs}_epochs"
+                        )
+                        
+                        accuracy = self.train_and_evaluate(model, optimizer, scheduler, epochs, device, run)
                         accuracies.append(accuracy)
+                        
+                        run.finish()
                         
                         progress.update(seed_progress, advance=1)
                     
@@ -183,18 +214,7 @@ class LRSchedulerSearch:
         epochs_list = [50, 100, 200]
         
         for scheduler_name, param_space in self.param_space.items():
-            results = self.grid_search(scheduler_name, param_space, epochs_list, seeds, device)
-            
-            # Log results to wandb
-            for epochs, (params, accuracy) in results.items():
-                run = wandb.init(
-                    project=project_name,
-                    config={"scheduler": scheduler_name, "epochs": epochs, **params},
-                    name=f"{scheduler_name}_{epochs}_epochs",
-                    group=scheduler_name
-                )
-                wandb.log({"best_accuracy": accuracy})
-                run.finish()
+            results = self.grid_search(scheduler_name, param_space, epochs_list, seeds, device, project_name)
             
             # Save results locally
             if not os.path.exists(project_name):
