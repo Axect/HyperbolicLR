@@ -212,7 +212,7 @@ def main():
     # Seeds from random.org
     seeds = [563, 351, 445, 688, 261]
 
-    project_name = "LRSchedulerSearch"
+    project_name = "CIFAR-LRSearch"
 
     # Define common hyperparameters
     batch_size = survey.routines.numeric(
