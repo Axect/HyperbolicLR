@@ -45,11 +45,11 @@ class SimpleCNN(nn.Module):
         return x
 
 class CNNHyperparameterSearch:
-    def __init__(self, batch_size, epochs, lr, infimum_lr):
+    def __init__(self, batch_size, lr, infimum_lr):
         self.hparams = {
             "learning_rate": lr,
             "batch_size": batch_size,
-            "epochs": epochs,
+            "epochs": 0,
             "infimum_lr": infimum_lr,
         }
         self.cnn_param_space = {
@@ -243,8 +243,6 @@ def main():
     # Define common hyperparameters
     batch_size = survey.routines.numeric(
         "Enter batch_size (e.g. 128)", decimal=False)
-    epochs = survey.routines.numeric(
-        "Enter maximum epochs (e.g. 200)", decimal=False)
     learning_rate = survey.routines.numeric(
         "Enter learning_rate (e.g. 1e-3)")
     infimum_lr = survey.routines.numeric(
@@ -264,7 +262,7 @@ def main():
     else:
         device = "cpu"
 
-    search_model = CNNHyperparameterSearch(batch_size, epochs, learning_rate, infimum_lr)
+    search_model = CNNHyperparameterSearch(batch_size, learning_rate, infimum_lr)
     search_model.search(seeds[:1], project_name, device)
 
 if __name__ == "__main__":
