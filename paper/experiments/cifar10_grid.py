@@ -265,7 +265,7 @@ def main():
         device = "cpu"
 
     search_model = CNNHyperparameterSearch(batch_size, epochs, learning_rate, infimum_lr)
-    search_model.search(seeds[:3], project_name, device)
+    search_model.search(seeds[:1], project_name, device)
 
 if __name__ == "__main__":
     main()
