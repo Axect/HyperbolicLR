@@ -53,7 +53,7 @@ class CNNHyperparameterSearch:
             "infimum_lr": infimum_lr,
         }
         self.cnn_param_space = {
-            "num_conv_layers": [2, 3, 4],
+            "num_conv_layers": [3, 4],
             "num_fc_layers": [2, 3, 4],
             "conv_channels": [32, 64, 128],
             "fc_units": [128, 256, 512]
@@ -217,7 +217,7 @@ class CNNHyperparameterSearch:
         return results
 
     def search(self, seeds, project_name, device):
-        epochs_list = [50, 100, 200]
+        epochs_list = [50, 100, 150]
         
         for scheduler_name in self.schedulers.keys():
             results = self.grid_search(scheduler_name, epochs_list, seeds, device, project_name)
