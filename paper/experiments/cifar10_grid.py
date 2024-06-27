@@ -55,7 +55,7 @@ class CNNHyperparameterSearch:
         self.cnn_param_space = {
             "num_conv_layers": [3, 4],
             "num_fc_layers": [2, 3, 4],
-            "conv_channels": [32, 64, 128],
+            "conv_channels": [128],
             "fc_units": [128, 256, 512]
         }
         self.schedulers = {
