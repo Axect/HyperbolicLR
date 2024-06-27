@@ -67,7 +67,7 @@ class CNNHyperparameterSearch:
         }
         self.scheduler_params = {
             "PolynomialLR": {"power": 0.9},
-            "CosineAnnealingLR": {"eta_min": 1e-4},
+            "CosineAnnealingLR": {"eta_min": infimum_lr},
             "ExponentialLR": {"gamma": 0.95},
             "HyperbolicLR": {"upper_bound": 250, "infimum_lr": infimum_lr},
             "ExpHyperbolicLR": {"upper_bound": 250, "infimum_lr": infimum_lr},
