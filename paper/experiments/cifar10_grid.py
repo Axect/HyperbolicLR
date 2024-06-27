@@ -59,14 +59,14 @@ class CNNHyperparameterSearch:
             "fc_units": [128, 256, 512]
         }
         self.schedulers = {
-            #"PolynomialLR": optim.lr_scheduler.PolynomialLR,
+            "PolynomialLR": optim.lr_scheduler.PolynomialLR,
             "CosineAnnealingLR": optim.lr_scheduler.CosineAnnealingLR,
             "ExponentialLR": optim.lr_scheduler.ExponentialLR,
             "HyperbolicLR": HyperbolicLR,
             "ExpHyperbolicLR": ExpHyperbolicLR,
         }
         self.scheduler_params = {
-            #"PolynomialLR": {"power": 0.5},
+            "PolynomialLR": {"power": 0.5},
             "CosineAnnealingLR": {"eta_min": infimum_lr},
             "ExponentialLR": {"gamma": 0.95},
             "HyperbolicLR": {"upper_bound": 250, "infimum_lr": infimum_lr},
@@ -238,7 +238,7 @@ def main():
     # Seeds from random.org
     seeds = [563, 351, 445, 688, 261]
 
-    project_name = "CNNHyperparameterSearch"
+    project_name = "CNNHyperparameterSearch2"
 
     # Define common hyperparameters
     batch_size = survey.routines.numeric(
