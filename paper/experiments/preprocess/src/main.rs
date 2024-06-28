@@ -45,13 +45,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Train Test Split
     //
     // - Total: 2016-07-01 ~ 2018-06-25 (725 days * 24 hours)
-    // - Task: From 7days data, predict 1day data
-    // - Split: Randomly select 2016-07-01 ~ 2018-06-25 (5days input + 1day label)
+    // - Task: From 1days data, predict 1day data
+    // - Split: Randomly select 2016-07-01 ~ 2018-06-25 (1day input + 1day label)
     // - Split ratio: 0.8
     let total_len = data.row;
     let days = total_len / 24;
-    let dataset_len = (days - 8) * 24;
-    let input_amount = 7 * 24;
+    let dataset_len = (days - 2) * 24;
+    let input_amount = 24;
     let label_amount = 24;
     let (input, label): (Vec<Matrix>, Vec<Matrix>) = (0 .. dataset_len)
         .map(|i| {
