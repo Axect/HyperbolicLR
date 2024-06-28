@@ -227,7 +227,7 @@ class Trainer:
         for input, target, label in dataloader:
             self.optimizer.zero_grad()
             pred = self.step(input, target)
-            loss = F.mse_loss(pred, label.to(self.device))
+            loss = F.huber_loss(pred, label.to(self.device))
             loss.backward()
             self.optimizer.step()
             epoch_loss += loss.item()
@@ -240,7 +240,7 @@ class Trainer:
         with torch.no_grad():
             for input, target, label in dataloader:
                 pred = self.step(input, target)
-                loss = F.mse_loss(pred, label.to(self.device))
+                loss = F.huber_loss(pred, label.to(self.device))
                 epoch_loss += loss.item()
         epoch_loss /= len(dataloader)
         return epoch_loss
@@ -401,7 +401,7 @@ def main():
             model = TFEncDec(hparams)
             net = model.to(device)
 
-            wandb.init(project="HyperbolicLR-ETT", name=run_name, group=group_name)
+            wandb.init(project="HyperbolicLR-ETT2", name=run_name, group=group_name)
             progress = Progress()
 
             optimizer = optimizer_class(net.parameters(), **optimizer_params_no_scheduler[optimizer_name])
@@ -427,7 +427,7 @@ def main():
                 model = TFEncDec(hparams)
                 net = model.to(device)
 
-                wandb.init(project="HyperbolicLR-ETT", name=run_name, group=group_name)
+                wandb.init(project="HyperbolicLR-ETT2", name=run_name, group=group_name)
                 progress = Progress()
 
                 optimizer = optimizer_class(net.parameters(), **optimizer_params[optimizer_name])
