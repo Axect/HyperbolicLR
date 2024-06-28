@@ -397,11 +397,12 @@ def main():
 
             group_name = f"{optimizer_name}_NoScheduler({num_epochs})"
             run_name = f"{group_name}[{seed}]"
+            tags = ["NoScheduler", optimizer_name, f"{num_epochs}"]
 
             model = TFEncDec(hparams)
             net = model.to(device)
 
-            wandb.init(project="HyperbolicLR-ETT2", name=run_name, group=group_name)
+            wandb.init(project="HyperbolicLR-ETT2", name=run_name, group=group_name, config=hparams, tags=tags)
             progress = Progress()
 
             optimizer = optimizer_class(net.parameters(), **optimizer_params_no_scheduler[optimizer_name])
@@ -423,11 +424,12 @@ def main():
 
                 group_name = f"{optimizer_name}_{scheduler_name}({num_epochs})"
                 run_name = f"{group_name}[{seed}]"
+                tags = [optimizer_name, scheduler_name, f"{num_epochs}"]
 
                 model = TFEncDec(hparams)
                 net = model.to(device)
 
-                wandb.init(project="HyperbolicLR-ETT2", name=run_name, group=group_name)
+                wandb.init(project="HyperbolicLR-ETT2", name=run_name, group=group_name, config=hparams, tags=tags)
                 progress = Progress()
 
                 optimizer = optimizer_class(net.parameters(), **optimizer_params[optimizer_name])
