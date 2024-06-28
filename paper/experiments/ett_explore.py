@@ -320,10 +320,6 @@ def main():
     dl_train   = DataLoader(train_data, batch_size=batch_size, shuffle=True)
     dl_val     = DataLoader(val_data, batch_size=batch_size, shuffle=False)
     # ──────────────────────────────────────────────────────────────────────
-    # Optimizer & Scheduler
-    optimizer = optim.AdamW(model.parameters(), lr=lr, betas=(0.85, 0.98))
-    scheduler = ExpHyperbolicLR(optimizer, upper_bound=250, max_iter=num_epochs, init_lr=lr, infimum_lr=infimum_lr)
-    # ──────────────────────────────────────────────────────────────────────
     # Hyperparameter candidates
     candidates = {
         "d_model": [32, 64, 128],
@@ -355,6 +351,10 @@ def main():
 
         model = TFEncDec(hparams)
         net = model.to(device)
+
+        # Optimizer & Scheduler
+        optimizer = optim.AdamW(model.parameters(), lr=lr, betas=(0.85, 0.98))
+        scheduler = ExpHyperbolicLR(optimizer, upper_bound=250, max_iter=num_epochs, init_lr=lr, infimum_lr=infimum_lr)
 
         wandb.init(project="HyperbolicLR-ETT(Explore)", name=run_name, group=group_name, config=hparams, tags=tags)
         progress = Progress()
