@@ -345,7 +345,7 @@ def main():
         torch.backends.cudnn.deterministic = True
         torch.cuda.manual_seed_all(seed)
 
-        group_name = f"EH_{d_model}_{nhead}_{dim_feedforward}_{numlayers}({num_epochs})"
+        group_name = f"EH_{hparams['d_model']}_{hparams['nhead']}_{hparams['dim_feedforward']}_{hparams['num_layers']}({num_epochs})"
         run_name = f"{group_name}[{seed}]"
         tags = ["ExpHyperbolicLR", f"{num_epochs}"]
 
