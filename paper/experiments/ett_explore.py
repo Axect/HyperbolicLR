@@ -322,10 +322,10 @@ def main():
     # ──────────────────────────────────────────────────────────────────────
     # Hyperparameter candidates
     candidates = {
-        "d_model": [16, 32, 64],
+        "d_model": [32, 64, 128],
         "nhead": [2, 4, 8],
-        "dim_feedforward": [32, 64, 128],
-        "num_layers": [2, 3, 4],
+        "dim_feedforward": [128, 512],
+        "num_layers": [2, 3],
     }
     keys = list(candidates.keys())
     vals = list(candidates.values())
