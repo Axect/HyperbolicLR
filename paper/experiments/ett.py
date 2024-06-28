@@ -365,7 +365,7 @@ def main():
     scheduler_params = {
         "PolynomialLR": {"power": 0.5, "total_iters": num_epochs},
         "CosineAnnealingLR": {"T_max": num_epochs, "eta_min": infimum_lr},
-        "ExponentialLR": {"gamma": 0.95},
+        "ExponentialLR": {"gamma": 0.97},
         "HyperbolicLR": {"upper_bound": 250, "max_iter": num_epochs, "init_lr": lr_scheduler, "infimum_lr": infimum_lr},
         "ExpHyperbolicLR": {"upper_bound": 250, "max_iter": num_epochs, "init_lr": lr_scheduler, "infimum_lr": infimum_lr},
     }
