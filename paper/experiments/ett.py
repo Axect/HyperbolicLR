@@ -294,12 +294,12 @@ def main():
         "Number of heads",
         decimal=False,
     )
-    num_layers = survey.routines.numeric(
-        "Number of layers",
-        decimal=False,
-    )
     dim_feedforward = survey.routines.numeric(
         "Dimension of the feedforward network",
+        decimal=False,
+    )
+    num_layers = survey.routines.numeric(
+        "Number of layers",
         decimal=False,
     )
     batch_size = survey.routines.numeric(
