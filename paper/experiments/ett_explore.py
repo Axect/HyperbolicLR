@@ -126,7 +126,8 @@ class Encoder(nn.Module):
             d_model, 
             nhead, 
             dim_feedforward,
-            batch_first=True
+            batch_first=True,
+            norm_first=True,
         )
         self.transformer_encoder = nn.TransformerEncoder(
             self.encoder_layer, 
@@ -156,7 +157,8 @@ class Decoder(nn.Module):
             d_model, 
             nhead, 
             dim_feedforward,
-            batch_first=True
+            batch_first=True,
+            norm_first=True,
         )
         self.transformer_decoder = nn.TransformerDecoder(
             self.decoder_layer, 
