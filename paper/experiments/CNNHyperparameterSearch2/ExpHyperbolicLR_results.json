@@ -1,0 +1,1 @@
+{"50": [{"num_conv_layers": 3, "num_fc_layers": 2, "conv_channels": 128, "fc_units": 128}, 0.7241], "100": [{"num_conv_layers": 4, "num_fc_layers": 2, "conv_channels": 128, "fc_units": 256}, 0.76], "150": [{"num_conv_layers": 4, "num_fc_layers": 2, "conv_channels": 128, "fc_units": 256}, 0.7613]}
