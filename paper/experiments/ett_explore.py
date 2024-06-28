@@ -310,7 +310,7 @@ def main():
         "dim_feedforward": 0,
         "batch_size": batch_size,
         "num_epochs": num_epochs,
-        "lr_scheduler": lr_scheduler,
+        "lr": lr,
         "infimum_lr": infimum_lr
     }
     # ──────────────────────────────────────────────────────────────────────
@@ -321,7 +321,7 @@ def main():
     dl_val     = DataLoader(val_data, batch_size=batch_size, shuffle=False)
     # ──────────────────────────────────────────────────────────────────────
     # Optimizer & Scheduler
-    optimizer = optim.AdamW(lr=lr_no_scheduler, betas=(0.85, 0.98))
+    optimizer = optim.AdamW(lr=lr, betas=(0.85, 0.98))
     scheduler = ExpHyperbolicLR(optimizer, upper_bound=250, max_iter=num_epochs, init_lr=lr, infimum_lr=infimum_lr)
     # ──────────────────────────────────────────────────────────────────────
     # Hyperparameter candidates
