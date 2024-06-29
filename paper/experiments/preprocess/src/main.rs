@@ -50,9 +50,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // - Split ratio: 0.8
     let total_len = data.row;
     let days = total_len / 24;
-    let dataset_len = (days - 4) * 24;
-    let input_amount = 2 * 24;
-    let label_amount = 2 * 24;
+    let dataset_len = (days - 2) * 24;
+    let input_amount = 24;
+    let label_amount = 24;
     let (input, label): (Vec<Matrix>, Vec<Matrix>) = (0 .. dataset_len)
         .map(|i| {
             let mut input = zeros(input_amount, 7);
@@ -69,9 +69,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .unzip();
     println!("Sliding Window Complete!");
 
-    let mut rng = stdrng_from_seed(42);
-    let mut total_ics = (0 .. input.len()).collect::<Vec<_>>();
-    total_ics.shuffle(&mut rng);
+    //let mut rng = stdrng_from_seed(42);
+    //let mut total_ics = (0 .. input.len()).collect::<Vec<_>>();
+    //total_ics.shuffle(&mut rng);
+    let total_ics = (0 .. input.len()).collect::<Vec<_>>();
     let train_ics = total_ics[0 .. (input.len() as f64 * 0.8) as usize].to_vec();
     let test_ics = total_ics[(input.len() as f64 * 0.8) as usize ..].to_vec();
     let train_input = train_ics.iter().map(|i| input[*i].clone()).collect::<Vec<_>>();

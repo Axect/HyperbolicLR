@@ -52,20 +52,16 @@ def load_ett_data(mode="train"):
         raise ValueError("mode must be either 'train' or 'test'")
 
     # Separate input and label data
-    input_data = df[df['type'] == 0][['group', 'HUFL', 'HULL', 'MUFL', 'MULL', 'LUFL', 'LULL']]
-    target_data = df[df['type'] == 0][['group', 'OT']]
+    input_data = df[df['type'] == 0][['group', 'HUFL', 'HULL', 'MUFL', 'MULL', 'LUFL', 'LULL', 'OT']]
     label_data = df[df['type'] == 1][['group', 'OT']]
     
     # Group the data
     grouped_input = input_data.groupby('group')
-    grouped_target = target_data.groupby('group')
     grouped_label = label_data.groupby('group')
     
     # Convert to list of tensors
-    input_tensors = [torch.tensor(group[['HUFL', 'HULL', 'MUFL', 'MULL', 'LUFL', 'LULL']].values, dtype=torch.float32) 
+    input_tensors = [torch.tensor(group[['HUFL', 'HULL', 'MUFL', 'MULL', 'LUFL', 'LULL', 'OT']].values, dtype=torch.float32) 
                      for _, group in grouped_input]
-    target_tensors = [torch.tensor(group['OT'].values, dtype=torch.float32) 
-                     for _, group in grouped_target]
     label_tensors = [torch.tensor(group['OT'].values, dtype=torch.float32) 
                      for _, group in grouped_label]
     
@@ -75,9 +71,16 @@ def load_ett_data(mode="train"):
     #label_tensors = [torch.nn.functional.pad(t, (0, max_len - len(t))) for t in label_tensors]
     
     # Stack tensors
-    inputs = torch.stack(input_tensors)
-    targets = torch.stack(target_tensors).unsqueeze(2)
-    labels = torch.stack(label_tensors).unsqueeze(2)
+    inputs = torch.stack(input_tensors)                 # (N, W, input_dim)
+    labels = torch.stack(label_tensors).unsqueeze(2)    # (N, W, 1)
+
+    # Target
+    targets = torch.roll(labels, shifts=1, dims=0)      # (N, W, 1)
+
+    # Remove first day
+    inputs = inputs[1:, :, :]                           # (N-1, W, input_dim)
+    labels = labels[1:, :, :]                           # (N-1, W, 1)
+    targets = targets[1:, :, :]                         # (N-1, W, 1)
 
     print(f"Input shape: {inputs.shape}")
     print(f"Target shape: {targets.shape}")
@@ -175,7 +178,12 @@ class Decoder(nn.Module):
         """
         x = self.embedding(x) * math.sqrt(self.d_model)
         x = self.pos_decoder(x)
-        out = self.transformer_decoder(x, memory)
+
+        # Create causal mask
+        seq_len = x.size(1)
+        causal_mask = torch.triu(torch.ones(seq_len, seq_len), diagonal=1).bool().to(x.device)
+
+        out = self.transformer_decoder(x, memory, tgt_mask=causal_mask)
         out = self.fc(out)
         return out
 
@@ -323,8 +331,8 @@ def main():
     # Hyperparameter candidates
     candidates = {
         "d_model": [32, 64, 128],
-        "nhead": [2, 8, 16],
-        "dim_feedforward": [64, 128, 256],
+        "nhead": [2, 4, 8],
+        "dim_feedforward": [128, 256, 512],
         "num_layers": [2, 3],
     }
     keys = list(candidates.keys())
