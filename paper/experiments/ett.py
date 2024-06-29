@@ -354,12 +354,12 @@ def main():
         "AdamW": optim.AdamW,
     }
     optimizer_params_no_scheduler = {
-        "SGD": {"lr": lr_no_scheduler, "momentum": 0.9, "weight_decay": 5e-4},
+        "SGD": {"lr": lr_no_scheduler * 10, "momentum": 0.9, "weight_decay": 5e-4},
         "Adam": {"lr": lr_no_scheduler},
         "AdamW": {"lr": lr_no_scheduler, "betas": (0.85, 0.98)},
     }
     optimizer_params = {
-        "SGD": {"lr": lr_scheduler, "momentum": 0.9, "weight_decay": 5e-4},
+        "SGD": {"lr": lr_scheduler * 10, "momentum": 0.9, "weight_decay": 5e-4},
         "Adam": {"lr": lr_scheduler},
         "AdamW": {"lr": lr_scheduler, "betas": (0.85, 0.98)},
     }
