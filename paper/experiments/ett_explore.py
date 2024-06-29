@@ -310,7 +310,7 @@ def main():
         "Infimum learning rate",
     )
     hparams = {
-        "input_dim": 6,
+        "input_dim": 7,
         "output_dim": 1,
         "d_model": 0,
         "nhead": 0,
