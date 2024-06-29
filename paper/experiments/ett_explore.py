@@ -60,7 +60,7 @@ def load_ett_data(mode="train"):
     grouped_label = label_data.groupby('group')
     
     # Convert to list of tensors
-    input_tensors = [torch.tensor(group[['HUFL', 'HULL', 'MUFL', 'MULL', 'LUFL', 'LULL', 'OT']].values, dtype=torch.float32) 
+    input_tensors = [torch.tensor(group[['HUFL', 'HULL', 'MUFL', 'MULL', 'LUFL', 'LULL']].values, dtype=torch.float32) 
                      for _, group in grouped_input]
     label_tensors = [torch.tensor(group['OT'].values, dtype=torch.float32) 
                      for _, group in grouped_label]
@@ -310,7 +310,7 @@ def main():
         "Infimum learning rate",
     )
     hparams = {
-        "input_dim": 7,
+        "input_dim": 6,
         "output_dim": 1,
         "d_model": 0,
         "nhead": 0,
