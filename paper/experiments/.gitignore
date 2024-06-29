@@ -1,4 +1,7 @@
 hyperbolic_lr.py
+mamba.py
+pscan.py
+
 wandb/
 data/
 __pycache__/
