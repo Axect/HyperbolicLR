@@ -344,7 +344,7 @@ def main():
         run_name = f"{group_name}[{seed}]"
         tags = ["ExpHyperbolicLR", f"{num_epochs}"]
 
-        model = TFEncDec(hparams)
+        model = MBEncDec(hparams)
         net = model.to(device)
 
         # Optimizer & Scheduler
