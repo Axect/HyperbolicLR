@@ -50,8 +50,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // - Split ratio: 0.8
     let total_len = data.row;
     let days = total_len / 24;
-    let dataset_len = (days - 2) * 24;
-    let input_amount = 24;
+    let dataset_len = (days - 8) * 24;
+    let input_amount = 7 * 24;
     let label_amount = 24;
     let (input, label): (Vec<Matrix>, Vec<Matrix>) = (0 .. dataset_len)
         .map(|i| {
