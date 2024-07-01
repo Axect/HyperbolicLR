@@ -200,23 +200,19 @@ def main():
     print(f"Using device: {device}")
 
     # Hyperparameters
-    hidden_dim = survey.routines.numeric("Hidden dimension", decimal=False)
-    num_layers = survey.routines.numeric("Number of layers", decimal=False)
     batch_size = survey.routines.numeric("Batch size", decimal=False)
     num_epochs = survey.routines.numeric("Number of epochs", decimal=False)
-    lr_no_scheduler = survey.routines.numeric("Learning rate (without scheduler; for Adam/AdamW)")
-    lr_scheduler = survey.routines.numeric("Learning rate (with scheduler; for Adam/AdamW)")
+    lr = survey.routines.numeric("Learning rate (with scheduler; for Adam/AdamW)")
     infimum_lr = survey.routines.numeric("Infimum learning rate")
 
     hparams = {
         "input_dim": 7,  # HUFL, HULL, MUFL, MULL, LUFL, LULL, OT
         "output_dim": 1,  # OT (Oil Temperature)
-        "hidden_dim": 256,
+        "hidden_dim": 64,
         "num_layers": 2,
         "batch_size": batch_size,
         "num_epochs": num_epochs,
-        "lr_no_scheduler": lr_no_scheduler,
-        "lr_scheduler": lr_scheduler,
+        "lr": lr,
         "infimum_lr": infimum_lr
     }
 
@@ -226,109 +222,46 @@ def main():
     dl_train = DataLoader(train_data, batch_size=batch_size, shuffle=True)
     dl_val = DataLoader(val_data, batch_size=batch_size, shuffle=False)
 
-    # Optimizer & Scheduler
-    optimizers = {
-        "SGD": optim.SGD,
-        "Adam": optim.Adam,
-        "AdamW": optim.AdamW
+    # Hyperparameter candidates
+    candidates = {
+        "hidden_dim": [32, 64, 128],
+        "num_layers": [1, 2, 3],
     }
-    optimizer_params_no_scheduler = {
-        "SGD": {"lr": lr_no_scheduler * 10, "momentum": 0.9, "weight_decay": 5e-4},
-        "Adam": {"lr": lr_no_scheduler},
-        "AdamW": {"lr": lr_no_scheduler, "betas": (0.85, 0.98)},
-    }
-    optimizer_params = {
-        "SGD": {"lr": lr_scheduler * 10, "momentum": 0.9, "weight_decay": 5e-4},
-        "Adam": {"lr": lr_scheduler},
-        "AdamW": {"lr": lr_scheduler, "betas": (0.85, 0.98)},
-    }
-    schedulers = {
-        "PolynomialLR": optim.lr_scheduler.PolynomialLR,
-        "CosineAnnealingLR": optim.lr_scheduler.CosineAnnealingLR,
-        "ExponentialLR": optim.lr_scheduler.ExponentialLR,
-        "HyperbolicLR": HyperbolicLR,
-        "ExpHyperbolicLR": ExpHyperbolicLR,
-    }
-    scheduler_params = {
-        "PolynomialLR": {"power": 0.5, "total_iters": num_epochs},
-        "CosineAnnealingLR": {"T_max": num_epochs, "eta_min": infimum_lr},
-        "ExponentialLR": {"gamma": 0.97},
-        "HyperbolicLR": {"upper_bound": 250, "max_iter": num_epochs, "init_lr": lr_scheduler, "infimum_lr": infimum_lr},
-        "ExpHyperbolicLR": {"upper_bound": 250, "max_iter": num_epochs, "init_lr": lr_scheduler, "infimum_lr": infimum_lr},
-    }
-    def adjust_params_for_SGD(scheduler_name, params, optimizer_name):
-        if optimizer_name == "SGD":
-            adjusted_params = params.copy()
-            if scheduler_name == "CosineAnnealingLR":
-                adjusted_params["eta_min"] = params["eta_min"] * 10
-            elif scheduler_name in ["HyperbolicLR", "ExpHyperbolicLR"]:
-                adjusted_params["init_lr"] = params["init_lr"] * 10
-                adjusted_params["infimum_lr"] = params["infimum_lr"] * 10
-            return adjusted_params
-        return params
-    # ──────────────────────────────────────────────────────────────────────
-    # Training
+    keys = list(candidates.keys())
+    vals = list(candidates.values())
+    product_vals = list(product(*vals))
 
-    # Seeds from random.org
-    seeds = [89, 231, 928, 814, 269]
+    for vals in product_vals:
+        hparams.update(dict(zip(keys, vals)))
+        
+        # Seeds from random.org
+        seed = 42
 
-    # Training without LR scheduler
-    for optimizer_name, optimizer_class in optimizers.items():
-        for seed in seeds:
-            # Fix seed for reproducibility
-            torch.manual_seed(seed)
-            random.seed(seed)
-            np.random.seed(seed)
-            torch.backends.cudnn.deterministic = True
-            torch.cuda.manual_seed_all(seed)
+        # Training with LR scheduler
+        # Fix seed for reproducibility
+        torch.manual_seed(seed)
+        random.seed(seed)
+        np.random.seed(seed)
+        torch.backends.cudnn.deterministic = True
+        torch.cuda.manual_seed_all(seed)
 
-            group_name = f"{optimizer_name}_NoScheduler({num_epochs})"
-            run_name = f"{group_name}[{seed}]"
-            tags = ["NoScheduler", optimizer_name, f"{num_epochs}"]
+        group_name = f"LSTM_{hparams['hidden_dim']}_{hparams['num_layers']}({num_epochs})"
+        run_name = f"{group_name}[{seed}]"
+        tags = ["ExpHyperbolicLR", f"{num_epochs}"]
 
-            model = EncoderDecoderLSTM(hparams["input_dim"], hparams["hidden_dim"], hparams["output_dim"], hparams["num_layers"])
-            net = model.to(device)
+        model = EncoderDecoderLSTM(hparams["input_dim"], hparams["hidden_dim"], hparams["output_dim"], hparams["num_layers"])
+        model.to(device)
 
-            # Optimizer & Scheduler
-            optimizer = optimizer_class(net.parameters(), **optimizer_params_no_scheduler[optimizer_name])
+        # Optimizer & Scheduler
+        optimizer = optim.AdamW(model.parameters(), lr=lr, betas=(0.85, 0.98))
+        scheduler = ExpHyperbolicLR(optimizer, upper_bound=250, max_iter=num_epochs, init_lr=lr, infimum_lr=infimum_lr)
 
-            wandb.init(project="HyperbolicLR-ETT-LSTM", name=run_name, group=group_name, config=hparams, tags=tags)
-            progress = Progress()
+        wandb.init(project="HyperbolicLR-ETT-LSTM(Explore)", name=run_name, group=group_name, config=hparams, tags=tags)
+        progress = Progress()
 
-            trainer = Trainer(model, optimizer, None, device=device)
-            trainer.train(dl_train, dl_val, progress, num_epochs)
-            wandb.finish()
-
-    # Training with LR scheduler
-    for optimizer_name, optimizer_class in optimizers.items():
-        for scheduler_name, scheduler_class in schedulers.items():
-            for seed in seeds:
-                # Fix seed for reproducibility
-                torch.manual_seed(seed)
-                random.seed(seed)
-                np.random.seed(seed)
-                torch.backends.cudnn.deterministic = True
-                torch.cuda.manual_seed_all(seed)
-
-                group_name = f"{optimizer_name}_{scheduler_name}({num_epochs})"
-                run_name = f"{group_name}[{seed}]"
-                tags = [scheduler_name, optimizer_name, f"{num_epochs}"]
-
-                model = EncoderDecoderLSTM(hparams["input_dim"], hparams["hidden_dim"], hparams["output_dim"], hparams["num_layers"])
-                net = model.to(device)
-
-                # Optimizer & Scheduler
-                optimizer = optimizer_class(net.parameters(), **optimizer_params_no_scheduler[optimizer_name])
-                scheduler_param = adjust_params_for_SGD(scheduler_name, scheduler_params[scheduler_name], optimizer_name)
-                scheduler = scheduler_class(optimizer, **scheduler_param)
-
-                wandb.init(project="HyperbolicLR-ETT-LSTM(Explore)", name=run_name, group=group_name, config=hparams, tags=tags)
-                progress = Progress()
-
-                trainer = Trainer(model, optimizer, scheduler, device=device)
-                trainer.train(dl_train, dl_val, progress, num_epochs)
-                wandb.finish()
-
+        trainer = Trainer(model, optimizer, scheduler, device=device)
+        trainer.train(dl_train, dl_val, progress, num_epochs)
+        wandb.finish()
 
 if __name__ == "__main__":
     main()
