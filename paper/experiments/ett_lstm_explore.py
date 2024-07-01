@@ -43,7 +43,7 @@ def load_ett_data(mode="train"):
         raise ValueError("mode must be either 'train' or 'test'")
 
     # Separate input and label data
-    input_data = df[df['type'] == 0][['group', 'HUFL', 'HULL', 'MUFL', 'MULL', 'LUFL', 'LULL', 'OT']]
+    input_data = df[df['type'] == 0][['group', 'OT']]
     label_data = df[df['type'] == 1][['group', 'OT']]
     
     # Group the data
@@ -51,13 +51,13 @@ def load_ett_data(mode="train"):
     grouped_label = label_data.groupby('group')
     
     # Convert to list of tensors
-    input_tensors = [torch.tensor(group[['HUFL', 'HULL', 'MUFL', 'MULL', 'LUFL', 'LULL', 'OT']].values, dtype=torch.float32) 
+    input_tensors = [torch.tensor(group['OT'].values, dtype=torch.float32) 
                      for _, group in grouped_input]
     label_tensors = [torch.tensor(group['OT'].values, dtype=torch.float32) 
                      for _, group in grouped_label]
     
     # Stack tensors
-    inputs = torch.stack(input_tensors)
+    inputs = torch.stack(input_tensors).unsqueeze(2)
     labels = torch.stack(label_tensors).unsqueeze(2)
 
     print(f"Input shape: {inputs.shape}")
@@ -209,7 +209,7 @@ def main():
     infimum_lr = survey.routines.numeric("Infimum learning rate")
 
     hparams = {
-        "input_dim": 7,  # HUFL, HULL, MUFL, MULL, LUFL, LULL, OT
+        "input_dim": 1,  # HUFL, HULL, MUFL, MULL, LUFL, LULL, OT
         "output_dim": 1,  # OT (Oil Temperature)
         "hidden_dim": 64,
         "num_layers": 2,
@@ -228,8 +228,8 @@ def main():
 
     # Hyperparameter candidates
     candidates = {
-        "hidden_dim": [256],
-        "num_layers": [4],
+        "hidden_dim": [32, 64, 128],
+        "num_layers": [1, 2, 3],
     }
     keys = list(candidates.keys())
     vals = list(candidates.values())
