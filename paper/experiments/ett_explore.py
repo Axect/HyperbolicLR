@@ -96,7 +96,7 @@ def load_ett_data(mode="train"):
 #  Network Model
 # └──────────────────────────────────────────────────────────┘
 class PositionalEncoding(nn.Module):
-    def __init__(self, d_model, max_len=100):
+    def __init__(self, d_model, max_len=200):
         super().__init__()
         pe = torch.zeros(max_len, d_model)
         position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1)
@@ -330,9 +330,9 @@ def main():
     # ──────────────────────────────────────────────────────────────────────
     # Hyperparameter candidates
     candidates = {
-        "d_model": [32, 64, 128],
-        "nhead": [2, 4, 8],
-        "dim_feedforward": [128, 256, 512],
+        "d_model": [512],
+        "nhead": [8],
+        "dim_feedforward": [1024, 2048],
         "num_layers": [2, 3],
     }
     keys = list(candidates.keys())

@@ -92,10 +92,11 @@ class Decoder(nn.Module):
 
 
 class EncoderDecoderLSTM(nn.Module):
-    def __init__(self, input_dim, hidden_dim, output_dim, num_layers):
+    def __init__(self, input_dim, hidden_dim, output_dim, num_layers, day_size=1):
         super().__init__()
         self.encoder = Encoder(input_dim, hidden_dim, num_layers)
         self.decoder = Decoder(output_dim, hidden_dim, output_dim, num_layers)
+        self.day_size = day_size
 
     def forward(self, src, target, teacher_forcing_ratio=0.5):
         batch_size, seq_len, _ = src.shape
@@ -107,10 +108,11 @@ class EncoderDecoderLSTM(nn.Module):
         decoder_input = torch.zeros(batch_size, 1, 1, device=src.device)
         
         # Initialize list to store predictions
-        outputs = torch.zeros(batch_size, 24, 1, device=src.device)
+        window_size = self.day_size * 24
+        outputs = torch.zeros(batch_size, window_size, 1, device=src.device)
         
         # Decode one step at a time
-        for t in range(24):
+        for t in range(window_size):
             output, hidden, cell = self.decoder(decoder_input, hidden, cell)
             outputs[:, t:t+1] = output
             
@@ -200,6 +202,7 @@ def main():
     print(f"Using device: {device}")
 
     # Hyperparameters
+    day_size = survey.routines.numeric("Day size (window_size = day_size * 24)", decimal=False)
     batch_size = survey.routines.numeric("Batch size", decimal=False)
     num_epochs = survey.routines.numeric("Number of epochs", decimal=False)
     lr = survey.routines.numeric("Learning rate (with scheduler; for Adam/AdamW)")
@@ -210,6 +213,7 @@ def main():
         "output_dim": 1,  # OT (Oil Temperature)
         "hidden_dim": 64,
         "num_layers": 2,
+        "day_size": day_size,
         "batch_size": batch_size,
         "num_epochs": num_epochs,
         "lr": lr,
@@ -224,8 +228,8 @@ def main():
 
     # Hyperparameter candidates
     candidates = {
-        "hidden_dim": [32, 64, 128],
-        "num_layers": [1, 2, 3],
+        "hidden_dim": [256],
+        "num_layers": [4],
     }
     keys = list(candidates.keys())
     vals = list(candidates.values())
@@ -249,7 +253,7 @@ def main():
         run_name = f"{group_name}[{seed}]"
         tags = ["ExpHyperbolicLR", f"{num_epochs}"]
 
-        model = EncoderDecoderLSTM(hparams["input_dim"], hparams["hidden_dim"], hparams["output_dim"], hparams["num_layers"])
+        model = EncoderDecoderLSTM(hparams["input_dim"], hparams["hidden_dim"], hparams["output_dim"], hparams["num_layers"], hparams["day_size"])
         model.to(device)
 
         # Optimizer & Scheduler
