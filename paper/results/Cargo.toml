@@ -1,0 +1,8 @@
+[package]
+name = "results"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+dialoguer = "0.11.0"
+peroxide = { version = "0.37.6", features = ["csv", "plot"] }
