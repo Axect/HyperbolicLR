@@ -53,7 +53,7 @@ class ViT(nn.Module):
         "mlp_dim": 512,
         "depth": 3,
     }
-    def __init__(self, hparams):
+    def __init__(self, hparams, device="cpu"):
         self.model = SimpleViT(
             image_size = 32,
             patch_size = 4,
