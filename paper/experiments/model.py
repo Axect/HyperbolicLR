@@ -54,6 +54,7 @@ class ViT(nn.Module):
         "depth": 3,
     }
     def __init__(self, hparams, device="cpu"):
+        super(ViT, self).__init__()
         self.model = SimpleViT(
             image_size = 32,
             patch_size = 4,
