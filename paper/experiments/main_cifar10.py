@@ -5,7 +5,7 @@ from torch.nn import functional as F
 from hyperbolic_lr import HyperbolicLR, ExpHyperbolicLR
 
 from model import SimpleCNN, ViT
-from util import load_cifar10, Trainer, set_seed
+from util import load_cifar10, load_cifar100, Trainer, set_seed
 
 import optuna
 
@@ -105,6 +105,13 @@ def main():
     )
     run_mode = run_modes[run_mode]
 
+    # Data selection
+    data = ["CIFAR10", "CIFAR100"]
+    data_index = survey.routines.select(
+        "Select dataset",
+        options=data
+    )
+
     # Model selection
     models = ["SimpleCNN", "ViT"]
     model = survey.routines.select(
@@ -133,10 +140,6 @@ def main():
         decimal=True
     )
 
-    # Load data
-    ds_train, ds_val = load_cifar10()
-    dl_train = DataLoader(ds_train, batch_size=batch_size, shuffle=True)
-    dl_val = DataLoader(ds_val, batch_size=batch_size, shuffle=False)
 
     # Run configuration
     run_config = {
@@ -171,8 +174,22 @@ def main():
         hparams[key] = val
 
     if run_mode == 'Run':
+        # Load data
+        if data_index == 0:
+            ds_train, ds_val = load_cifar10(subset_ratio=1.0)
+        else:
+            ds_train, ds_val = load_cifar100(subset_ratio=1.0)
+        dl_train = DataLoader(ds_train, batch_size=batch_size, shuffle=True)
+        dl_val = DataLoader(ds_val, batch_size=batch_size, shuffle=False)
         run(run_config, hparams, dl_train=dl_train, dl_val=dl_val, seeds=seeds, device=device)
     elif run_mode == 'Search':
+        # Load data
+        if data_index == 0:
+            ds_train, ds_val = load_cifar10(subset_ratio=0.1)
+        else:
+            ds_train, ds_val = load_cifar100(subset_ratio=0.1)
+        dl_train = DataLoader(ds_train, batch_size=batch_size, shuffle=True)
+        dl_val = DataLoader(ds_val, batch_size=batch_size, shuffle=False)
         keys = list(hparams.keys())
         selections = survey.routines.basket(
             "Select hyperparameters to search (Use '->' to select)",
@@ -195,6 +212,13 @@ def main():
             hparams.update(dict(zip(search_keys, pval)))
             run(run_config, hparams, seeds=seeds, dl_train=dl_train, dl_val=dl_val, device=device)
     elif run_mode == 'Compare':
+        # Load data
+        if data_index == 0:
+            ds_train, ds_val = load_cifar10(subset_ratio=1.0)
+        else:
+            ds_train, ds_val = load_cifar100(subset_ratio=1.0)
+        dl_train = DataLoader(ds_train, batch_size=batch_size, shuffle=True)
+        dl_val = DataLoader(ds_val, batch_size=batch_size, shuffle=False)
         optimizers = {
             #"SGD": optim.SGD,
             "Adam": optim.Adam,
@@ -253,6 +277,13 @@ def main():
                 run_config["scheduler_params"] = adjust_params_for_SGD(scheduler_name, scheduler_params[scheduler_name], optimizer_name)
                 run(run_config, hparams, seeds=seeds, dl_train=dl_train, dl_val=dl_val, device=device)
     elif run_mode == 'Optimize':
+        # Load data
+        if data_index == 0:
+            ds_train, ds_val = load_cifar10(subset_ratio=0.1)
+        else:
+            ds_train, ds_val = load_cifar100(subset_ratio=0.1)
+        dl_train = DataLoader(ds_train, batch_size=batch_size, shuffle=True)
+        dl_val = DataLoader(ds_val, batch_size=batch_size, shuffle=False)
         optimizers = ["Adam", "AdamW"]
         choose_optimizer = survey.routines.select(
             "Select optimizer",
@@ -321,6 +352,14 @@ def main():
         )
         study.optimize(object, n_trials=25)
     elif run_mode == 'Optimize-Compare':
+        # Load data
+        if data_index == 0:
+            ds_train, ds_val = load_cifar10(subset_ratio=1.0)
+        else:
+            ds_train, ds_val = load_cifar100(subset_ratio=1.0)
+        dl_train = DataLoader(ds_train, batch_size=batch_size, shuffle=True)
+        dl_val = DataLoader(ds_val, batch_size=batch_size, shuffle=False)
+
         # Load study
         studies = optuna.get_all_study_names(storage=f"sqlite:///{project_name}.db")
 

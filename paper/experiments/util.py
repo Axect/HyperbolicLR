@@ -41,6 +41,34 @@ def load_cifar10(subset_ratio=0.1):
     return trainset, testset
 
 
+def load_cifar100(subset_ratio=0.1):
+    transform_train = transforms.Compose([
+        transforms.RandomCrop(32, padding=4),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+        transforms.Normalize((0.5071, 0.4867, 0.4408), (0.2675, 0.2565, 0.2761)),
+    ])
+    transform_test = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.5071, 0.4867, 0.4408), (0.2675, 0.2565, 0.2761)),
+    ])
+    trainset = torchvision.datasets.CIFAR100(root='./data', train=True, download=True, transform=transform_train)
+    testset = torchvision.datasets.CIFAR100(root='./data', train=False, download=True, transform=transform_test)
+    # Randomly choose subset of train data
+    train_size = len(trainset)
+    subset_size = int(train_size * subset_ratio)
+    train_ics = np.random.choice(train_size, subset_size, replace=False)
+    trainsubset = Subset(trainset, train_ics)
+    # Randomly choose subset of test data
+    test_size = len(testset)
+    subset_size = int(test_size * subset_ratio)
+    test_ics = np.random.choice(test_size, subset_size, replace=False)
+    testsubset = Subset(testset, test_ics)
+    trainset = trainsubset
+    testset = testsubset
+    return trainset, testset
+
+
 def set_seed(seed):
     random.seed(seed)
     np.random.seed(seed)
