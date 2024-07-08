@@ -11,7 +11,7 @@ class SimpleCNN(nn.Module):
         "conv_channels": 128,
         "fc_units": 512
     }
-    def __init__(self, hparams, device="cpu"):
+    def __init__(self, hparams, num_classes=10, device="cpu"):
         super(SimpleCNN, self).__init__()
         self.conv_layers = nn.ModuleList()
         self.fc_layers = nn.ModuleList()
@@ -35,7 +35,7 @@ class SimpleCNN(nn.Module):
             self.fc_layers.append(nn.Linear(fc_input, fc_units))
             self.fc_layers.append(nn.ReLU())
             fc_input = fc_units
-        self.fc_layers.append(nn.Linear(fc_input, 10))
+        self.fc_layers.append(nn.Linear(fc_input, num_classes))
     
     def forward(self, x):
         for layer in self.conv_layers:
@@ -53,12 +53,12 @@ class ViT(nn.Module):
         "mlp_dim": 512,
         "depth": 3,
     }
-    def __init__(self, hparams, device="cpu"):
+    def __init__(self, hparams, num_classes=10, device="cpu"):
         super(ViT, self).__init__()
         self.model = SimpleViT(
             image_size = 32,
             patch_size = 4,
-            num_classes = 10,
+            num_classes = num_classes,
             dim = hparams["dim"],
             heads = hparams["heads"],
             mlp_dim = hparams["mlp_dim"],

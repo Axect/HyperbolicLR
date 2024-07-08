@@ -28,6 +28,7 @@ def run(run_config, hparams, seeds, dl_train, dl_val, device='cpu'):
     scheduler_name = run_config['scheduler_name']
     scheduler_params = run_config['scheduler_params']
     epochs = run_config['epochs']
+    num_classes = run_config['num_classes']
 
     group_name = f"{optimizer_name}_{scheduler_name}({epochs})["
     tags = [f"{epochs}", optimizer_name, scheduler_name]
@@ -47,7 +48,7 @@ def run(run_config, hparams, seeds, dl_train, dl_val, device='cpu'):
 
         run_name = f"{group_name}[{seed}]"
 
-        net = model(hparams, device=device)
+        net = model(hparams, num_classes=num_classes, device=device)
         optimizer_ = optimizer(net.parameters(), **optimizer_params)
         if scheduler is not None:
             scheduler_ = scheduler(optimizer_, **scheduler_params)
@@ -177,8 +178,10 @@ def main():
         # Load data
         if data_index == 0:
             ds_train, ds_val = load_cifar10(subset_ratio=1.0)
+            run_config["num_classes"] = 10
         else:
             ds_train, ds_val = load_cifar100(subset_ratio=1.0)
+            run_config["num_classes"] = 100
         dl_train = DataLoader(ds_train, batch_size=batch_size, shuffle=True)
         dl_val = DataLoader(ds_val, batch_size=batch_size, shuffle=False)
         run(run_config, hparams, dl_train=dl_train, dl_val=dl_val, seeds=seeds, device=device)
@@ -186,8 +189,10 @@ def main():
         # Load data
         if data_index == 0:
             ds_train, ds_val = load_cifar10(subset_ratio=0.1)
+            run_config["num_classes"] = 10
         else:
             ds_train, ds_val = load_cifar100(subset_ratio=0.1)
+            run_config["num_classes"] = 100
         dl_train = DataLoader(ds_train, batch_size=batch_size, shuffle=True)
         dl_val = DataLoader(ds_val, batch_size=batch_size, shuffle=False)
         keys = list(hparams.keys())
@@ -215,8 +220,10 @@ def main():
         # Load data
         if data_index == 0:
             ds_train, ds_val = load_cifar10(subset_ratio=1.0)
+            run_config["num_classes"] = 10
         else:
             ds_train, ds_val = load_cifar100(subset_ratio=1.0)
+            run_config["num_classes"] = 100
         dl_train = DataLoader(ds_train, batch_size=batch_size, shuffle=True)
         dl_val = DataLoader(ds_val, batch_size=batch_size, shuffle=False)
         optimizers = {
@@ -280,8 +287,10 @@ def main():
         # Load data
         if data_index == 0:
             ds_train, ds_val = load_cifar10(subset_ratio=0.1)
+            run_config["num_classes"] = 10
         else:
             ds_train, ds_val = load_cifar100(subset_ratio=0.1)
+            run_config["num_classes"] = 100
         dl_train = DataLoader(ds_train, batch_size=batch_size, shuffle=True)
         dl_val = DataLoader(ds_val, batch_size=batch_size, shuffle=False)
         optimizers = ["Adam", "AdamW"]
@@ -355,8 +364,10 @@ def main():
         # Load data
         if data_index == 0:
             ds_train, ds_val = load_cifar10(subset_ratio=1.0)
+            run_config["num_classes"] = 10
         else:
             ds_train, ds_val = load_cifar100(subset_ratio=1.0)
+            run_config["num_classes"] = 100
         dl_train = DataLoader(ds_train, batch_size=batch_size, shuffle=True)
         dl_val = DataLoader(ds_val, batch_size=batch_size, shuffle=False)
 
