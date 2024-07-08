@@ -1,4 +1,6 @@
 from torch import nn
+from torch.nn import functional as F
+from vit_pytorch import SimpleViT
 
 
 # For CNN
@@ -42,3 +44,25 @@ class SimpleCNN(nn.Module):
         for layer in self.fc_layers:
             x = layer(x)
         return x
+
+
+class ViT(nn.Module):
+    default_hparams = {
+        "dim": 32,
+        "heads": 2,
+        "mlp_dim": 512,
+        "depth": 3,
+    }
+    def __init__(self, hparams):
+        self.model = SimpleViT(
+            image_size = 32,
+            patch_size = 4,
+            num_classes = 10,
+            dim = hparams["dim"],
+            heads = hparams["heads"],
+            mlp_dim = hparams["mlp_dim"],
+            depth = hparams["depth"],
+        )
+
+    def forward(self, x):
+        return self.model(x)

@@ -18,6 +18,8 @@ cycler==0.12.1
     # via matplotlib
 docker-pycreds==0.4.0
     # via wandb
+einops==0.8.0
+    # via vit-pytorch
 filelock==3.14.0
     # via torch
 fonttools==4.53.0
@@ -150,8 +152,11 @@ sympy==1.12.1
     # via torch
 threadpoolctl==3.5.0
 torch==2.3.1
-    # via torchvision
+    # via
+    #   torchvision
+    #   vit-pytorch
 torchvision==0.18.1
+    # via vit-pytorch
 tqdm==4.66.4
     # via optuna
 typing-extensions==4.12.2
@@ -165,4 +170,5 @@ urllib3==2.2.1
     # via
     #   requests
     #   sentry-sdk
+vit-pytorch==1.7.0
 wandb==0.17.1

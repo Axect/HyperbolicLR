@@ -4,7 +4,7 @@ from torch.utils.data import DataLoader
 from torch.nn import functional as F
 from hyperbolic_lr import HyperbolicLR, ExpHyperbolicLR
 
-from model import SimpleCNN
+from model import SimpleCNN, ViT
 from util import load_cifar10, Trainer, set_seed
 
 import optuna
@@ -106,7 +106,7 @@ def main():
     run_mode = run_modes[run_mode]
 
     # Model selection
-    models = ["SimpleCNN"]
+    models = ["SimpleCNN", "ViT"]
     model = survey.routines.select(
         "Select model",
         options=models
