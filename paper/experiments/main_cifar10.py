@@ -188,10 +188,10 @@ def main():
     elif run_mode == 'Search':
         # Load data
         if data_index == 0:
-            ds_train, ds_val = load_cifar10(subset_ratio=0.1)
+            ds_train, ds_val = load_cifar10(subset_ratio=1.0)
             run_config["num_classes"] = 10
         else:
-            ds_train, ds_val = load_cifar100(subset_ratio=0.1)
+            ds_train, ds_val = load_cifar100(subset_ratio=1.0)
             run_config["num_classes"] = 100
         dl_train = DataLoader(ds_train, batch_size=batch_size, shuffle=True)
         dl_val = DataLoader(ds_val, batch_size=batch_size, shuffle=False)
@@ -286,10 +286,10 @@ def main():
     elif run_mode == 'Optimize':
         # Load data
         if data_index == 0:
-            ds_train, ds_val = load_cifar10(subset_ratio=0.1)
+            ds_train, ds_val = load_cifar10(subset_ratio=1.0)
             run_config["num_classes"] = 10
         else:
-            ds_train, ds_val = load_cifar100(subset_ratio=0.1)
+            ds_train, ds_val = load_cifar100(subset_ratio=1.0)
             run_config["num_classes"] = 100
         dl_train = DataLoader(ds_train, batch_size=batch_size, shuffle=True)
         dl_val = DataLoader(ds_val, batch_size=batch_size, shuffle=False)
