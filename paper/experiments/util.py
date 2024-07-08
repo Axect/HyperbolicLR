@@ -1,6 +1,6 @@
 import torch
 import torch.nn.functional as F
-from torch.utils.data import TensorDataset, random_split
+from torch.utils.data import TensorDataset, random_split, Subset
 import torchvision
 import torchvision.transforms as transforms
 import wandb
@@ -9,7 +9,7 @@ import numpy as np
 import random
 
 
-def load_cifar10():
+def load_cifar10(subset_ratio=0.1):
     transform_train = transforms.Compose([
         transforms.RandomCrop(32, padding=4),
         transforms.RandomHorizontalFlip(),
@@ -22,6 +22,21 @@ def load_cifar10():
     ])
     trainset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform_train)
     testset = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform_test)
+
+    # Randomly choose subset of train data
+    train_size = len(trainset)
+    subset_size = int(train_size * subset_ratio)
+    train_ics = np.random.choice(train_size, subset_size, replace=False)
+    trainsubset = Subset(trainset, train_ics)
+
+    # Randomly choose subset of test data
+    test_size = len(testset)
+    subset_size = int(test_size * subset_ratio)
+    test_ics = np.random.choice(test_size, subset_size, replace=False)
+    testsubset = Subset(testset, test_ics)
+
+    trainset = trainsubset
+    testset = testsubset
 
     return trainset, testset
 

@@ -2,6 +2,7 @@ hyperbolic_lr.py
 mamba.py
 pscan.py
 
+*.db
 wandb/
 data/
 __pycache__/
