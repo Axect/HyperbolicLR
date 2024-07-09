@@ -52,6 +52,7 @@ class ViT(nn.Module):
         "heads": 2,
         "mlp_dim": 512,
         "depth": 3,
+        "dropout": 0.1,
     }
     def __init__(self, hparams, num_classes=10, device="cpu"):
         super(ViT, self).__init__()
@@ -63,6 +64,7 @@ class ViT(nn.Module):
             heads = hparams["heads"],
             mlp_dim = hparams["mlp_dim"],
             depth = hparams["depth"],
+            dropout = hparams["dropout"]
         )
 
     def forward(self, x):
