@@ -114,6 +114,12 @@ def main():
         options=data
     )
 
+    # Subset ratio input
+    subset_ratio = survey.routines.numeric(
+        "Input subset ratio (e.g. 1.0 or 0.1)",
+        decimal=True
+    )
+
     # Model selection
     models = ["SimpleCNN", "ViT"]
     model = survey.routines.select(
@@ -164,6 +170,16 @@ def main():
         'epochs': epochs,
     }
 
+    # Load data
+    if data_index == 0:
+        ds_train, ds_val = load_cifar10(subset_ratio=subset_ratio)
+        run_config["num_classes"] = 10
+    else:
+        ds_train, ds_val = load_cifar100(subset_ratio=subset_ratio)
+        run_config["num_classes"] = 100
+    dl_train = DataLoader(ds_train, batch_size=batch_size, shuffle=True)
+    dl_val = DataLoader(ds_val, batch_size=batch_size, shuffle=False)
+
     hparams = model.default_hparams
 
     # Survey model specific hparams
@@ -176,26 +192,8 @@ def main():
         hparams[key] = val
 
     if run_mode == 'Run':
-        # Load data
-        if data_index == 0:
-            ds_train, ds_val = load_cifar10(subset_ratio=1.0)
-            run_config["num_classes"] = 10
-        else:
-            ds_train, ds_val = load_cifar100(subset_ratio=1.0)
-            run_config["num_classes"] = 100
-        dl_train = DataLoader(ds_train, batch_size=batch_size, shuffle=True)
-        dl_val = DataLoader(ds_val, batch_size=batch_size, shuffle=False)
         run(run_config, hparams, dl_train=dl_train, dl_val=dl_val, seeds=seeds, device=device)
     elif run_mode == 'Search':
-        # Load data
-        if data_index == 0:
-            ds_train, ds_val = load_cifar10(subset_ratio=1.0)
-            run_config["num_classes"] = 10
-        else:
-            ds_train, ds_val = load_cifar100(subset_ratio=1.0)
-            run_config["num_classes"] = 100
-        dl_train = DataLoader(ds_train, batch_size=batch_size, shuffle=True)
-        dl_val = DataLoader(ds_val, batch_size=batch_size, shuffle=False)
         keys = list(hparams.keys())
         selections = survey.routines.basket(
             "Select hyperparameters to search (Use '->' to select)",
@@ -218,15 +216,6 @@ def main():
             hparams.update(dict(zip(search_keys, pval)))
             run(run_config, hparams, seeds=seeds, dl_train=dl_train, dl_val=dl_val, device=device)
     elif run_mode == 'Compare':
-        # Load data
-        if data_index == 0:
-            ds_train, ds_val = load_cifar10(subset_ratio=1.0)
-            run_config["num_classes"] = 10
-        else:
-            ds_train, ds_val = load_cifar100(subset_ratio=1.0)
-            run_config["num_classes"] = 100
-        dl_train = DataLoader(ds_train, batch_size=batch_size, shuffle=True)
-        dl_val = DataLoader(ds_val, batch_size=batch_size, shuffle=False)
         optimizers = {
             #"SGD": optim.SGD,
             "Adam": optim.Adam,
@@ -285,15 +274,6 @@ def main():
                 run_config["scheduler_params"] = adjust_params_for_SGD(scheduler_name, scheduler_params[scheduler_name], optimizer_name)
                 run(run_config, hparams, seeds=seeds, dl_train=dl_train, dl_val=dl_val, device=device)
     elif run_mode == 'Optimize':
-        # Load data
-        if data_index == 0:
-            ds_train, ds_val = load_cifar10(subset_ratio=1.0)
-            run_config["num_classes"] = 10
-        else:
-            ds_train, ds_val = load_cifar100(subset_ratio=1.0)
-            run_config["num_classes"] = 100
-        dl_train = DataLoader(ds_train, batch_size=batch_size, shuffle=True)
-        dl_val = DataLoader(ds_val, batch_size=batch_size, shuffle=False)
         optimizers = ["Adam", "AdamW"]
         choose_optimizer = survey.routines.select(
             "Select optimizer",
@@ -362,16 +342,6 @@ def main():
         )
         study.optimize(object, n_trials=25)
     elif run_mode == 'Optimize-Compare':
-        # Load data
-        if data_index == 0:
-            ds_train, ds_val = load_cifar10(subset_ratio=1.0)
-            run_config["num_classes"] = 10
-        else:
-            ds_train, ds_val = load_cifar100(subset_ratio=1.0)
-            run_config["num_classes"] = 100
-        dl_train = DataLoader(ds_train, batch_size=batch_size, shuffle=True)
-        dl_val = DataLoader(ds_val, batch_size=batch_size, shuffle=False)
-
         # Load study
         studies = optuna.get_all_study_names(storage=f"sqlite:///{project_name}.db")
 
