@@ -1,4 +1,5 @@
 import torch
+from torch import nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
 from torch.nn import functional as F
@@ -63,7 +64,7 @@ def run(run_config, hparams, seeds, dl_train, dl_val, device='cpu'):
             config=hparams
         )
 
-        trainer = Trainer(net, optimizer_, scheduler_, criterion=F.cross_entropy, acc=True, device=device)
+        trainer = Trainer(net, optimizer_, scheduler_, criterion=nn.CrossEntropyLoss(label_smoothing=0.1), acc=True, device=device)
         val_loss_, accuracy_ = trainer.train(dl_train, dl_val, epochs)
         val_loss += val_loss_
         accuracy += accuracy_
