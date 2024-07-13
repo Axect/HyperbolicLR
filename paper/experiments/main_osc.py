@@ -69,7 +69,7 @@ def run(run_config, hparams, seeds, dl_train, dl_val, device='cpu'):
             config=hparams
         )
 
-        trainer = Trainer(net, optimizer_, scheduler_, criterion=nn.HuberLoss, acc=False, device=device)
+        trainer = Trainer(net, optimizer_, scheduler_, criterion=nn.HuberLoss(), acc=False, device=device)
         val_loss_ = trainer.train(dl_train, dl_val, epochs)
         val_loss += val_loss_
         wandb.finish()
