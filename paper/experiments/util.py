@@ -99,10 +99,7 @@ def load_osc_data(dtype="simple", mode="S", hist=10, pred=10, ratio=0.8):
     elif dtype == "damped":
         df = df.filter(pl.col('zeta') == 0.01)
     elif dtype == "total":
-        df1 = df.filter(pl.col('zeta') == 0)
-        df2 = df.filter(pl.col('zeta') == 0.01)
-        df3 = df.filter(pl.col('zeta') == 0.02)
-        df = pl.concat([df1, df2, df3])
+        df = df
     else:
         raise ValueError("dtype must be 'simple' or 'damped'")
 
