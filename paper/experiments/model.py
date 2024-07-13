@@ -67,3 +67,89 @@ class ViT(nn.Module):
 
     def forward(self, x):
         return self.model(x)
+
+
+# LSTM
+class Encoder(nn.Module):
+    def __init__(self, hidden_size=16, num_layers=1, input_size=1):
+        super().__init__()
+        self.lstm = nn.LSTM(
+            input_size=input_size,
+            hidden_size=hidden_size,
+            num_layers=num_layers,
+            batch_first=True,
+        )
+
+    def forward(self, x):
+        """
+        - x: (B, W, 1)
+        - h_n: (L, B, H)
+        - c_n: (L, B, H)
+        """
+        _, (h_n, c_n) = self.lstm(x)
+        return h_n, c_n
+
+
+class Decoder(nn.Module):
+    def __init__(self, hidden_size=16, num_layers=1, input_size=1, output_size=1):
+        super().__init__()
+        self.lstm = nn.LSTM(
+            input_size=input_size,
+            hidden_size=hidden_size,
+            num_layers=num_layers,
+            batch_first=True,
+        )
+        self.fc = nn.Linear(hidden_size, output_size)
+
+    def forward(self, x, h_c):
+        """
+        - x: (B, 1, input_size)
+        - h_c: (L, B, H)
+        - output: (B, 1, H)
+        - pred: (B, 1, output_size)
+        """
+        output, (h, c) = self.lstm(x, h_c)
+        pred = self.fc(output)
+        return pred, (h, c)
+
+
+class LSTM_Seq2Seq(nn.Module):
+    default_hparams = {
+        "hidden_size": 128,
+        "num_layers": 3,
+    }
+    def __init__(self, hparams, pred=10, input_size=1, output_size=1, device='cpu'):
+        super().__init__()
+
+        hidden_size = hparams["hidden_size"]
+        num_layers  = hparams["num_layers"]
+
+        self.encoder = Encoder(
+            hidden_size=hidden_size,
+            num_layers=num_layers,
+            input_size=input_size,
+        )
+        self.decoder = Decoder(
+            hidden_size=hidden_size,
+            num_layers=num_layers,
+            input_size=input_size,
+            output_size=output_size,
+        )
+        self.pred_len = pred
+        self.device = device
+
+    def forward(self, x):
+        B, _, F = x.shape
+
+        # Encoding
+        h_c = self.encoder(x)
+
+        # Predict
+        pred_output = []
+        pred_input  = torch.zeros((B, 1, F)).to(self.device)
+        for _ in range(self.pred_len):
+            pred_input, h_c = self.decoder(pred_input, h_c)
+            pred_output.append(pred_input)
+        pred_output = torch.cat(pred_output, dim=1)
+
+        return pred_output

@@ -5,8 +5,8 @@ from torch.utils.data import DataLoader
 from torch.nn import functional as F
 from hyperbolic_lr import HyperbolicLR, ExpHyperbolicLR
 
-from model import SimpleCNN, ViT
-from util import load_cifar10, load_cifar100, Trainer, set_seed
+from model import LSTM_Seq2Seq
+from util import load_osc_data, Trainer, set_seed
 
 import optuna
 
@@ -29,10 +29,16 @@ def run(run_config, hparams, seeds, dl_train, dl_val, device='cpu'):
     scheduler_name = run_config['scheduler_name']
     scheduler_params = run_config['scheduler_params']
     epochs = run_config['epochs']
-    num_classes = run_config['num_classes']
+    batch_size = run_config['batch_size']
+    dtype = run_config['dtype']
+    mode = run_config['mode']
+    hist = run_config['hist']
+    pred = run_config['pred']
+    input_size = run_config['input_size']
+    output_size = run_config['output_size']
 
-    group_name = f"{optimizer_name}_{scheduler_name}({epochs})["
-    tags = [f"{epochs}", optimizer_name, scheduler_name]
+    group_name = f"{optimizer_name}_{scheduler_name}_{dtype}-{mode}-{hist}-{pred}({epochs})["
+    tags = [dtype, mode, f"{hist}-{pred}", f"{epochs}", optimizer_name, scheduler_name]
 
     for key, val in hparams.items():
         # if type of val is float then {val:.4e} else val
@@ -43,13 +49,12 @@ def run(run_config, hparams, seeds, dl_train, dl_val, device='cpu'):
     group_name = group_name[:-1] + "]"
 
     val_loss = 0.0
-    accuracy = 0.0
     for seed in seeds:
         set_seed(seed)
 
         run_name = f"{group_name}[{seed}]"
 
-        net = model(hparams, num_classes=num_classes, device=device)
+        net = model(hparams, pred=pred, input_size=input_size, output_size=output_size, device=device)
         optimizer_ = optimizer(net.parameters(), **optimizer_params)
         if scheduler is not None:
             scheduler_ = scheduler(optimizer_, **scheduler_params)
@@ -64,18 +69,17 @@ def run(run_config, hparams, seeds, dl_train, dl_val, device='cpu'):
             config=hparams
         )
 
-        trainer = Trainer(net, optimizer_, scheduler_, criterion=nn.CrossEntropyLoss(label_smoothing=0.1), acc=True, device=device)
-        val_loss_, accuracy_ = trainer.train(dl_train, dl_val, epochs)
+        trainer = Trainer(net, optimizer_, scheduler_, criterion=nn.HuberLoss, acc=False, device=device)
+        val_loss_ = trainer.train(dl_train, dl_val, epochs)
         val_loss += val_loss_
-        accuracy += accuracy_
         wandb.finish()
 
-    return val_loss / len(seeds), accuracy / len(seeds)
+    return val_loss / len(seeds)
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--project', type=str, default="HyperbolicLR-CIFAR10")
+    parser.add_argument('--project', type=str, default="HyperbolicLR-OSC")
     parser.add_argument('--seed', type=int, default=0)
     args = parser.parse_args()
 
@@ -108,25 +112,53 @@ def main():
     run_mode = run_modes[run_mode]
 
     # Data selection
-    data = ["CIFAR10", "CIFAR100"]
+    data = ["OSC"]
     data_index = survey.routines.select(
         "Select dataset",
         options=data
     )
 
-    # Subset ratio input
-    subset_ratio = survey.routines.numeric(
-        "Input subset ratio (e.g. 1.0 or 0.1)",
-        decimal=True
-    )
-
     # Model selection
-    models = ["SimpleCNN", "ViT"]
+    models = ["LSTM_Seq2Seq"]
     model = survey.routines.select(
         "Select model",
         options=models
     )
     model = globals()[models[model]]
+
+    # Survey dtype, mode
+    dtypes = ["simple", "damped"]
+    #modes  = ["S", "MS", "M"]
+    dtype = survey.routines.select(
+        "Select dtype",
+        options=dtypes
+    )
+    dtype = dtypes[dtype]
+    #mode = survey.routines.select(
+    #    "Select mode",
+    #    options=modes
+    #)
+    #mode = modes[mode]
+    mode = "S"
+    if mode == "S":
+        input_size = 1
+        output_size = 1
+    elif mode == "MS":
+        input_size = 3
+        output_size = 1
+    else:
+        input_size = 3
+        output_size = 3
+
+    # Survey hist, pred
+    hist = survey.routines.numeric(
+        "Input history length",
+        decimal=False
+    )
+    pred = survey.routines.numeric(
+        "Input prediction length",
+        decimal=False
+    )
 
     # Survey batch_size, epochs
     batch_size = survey.routines.numeric(
@@ -168,15 +200,16 @@ def main():
         },
         'batch_size': batch_size,
         'epochs': epochs,
+        'dtype': dtype,
+        'mode': mode,
+        'hist': hist,
+        'pred': pred,
+        'input_size': input_size,
+        'output_size': output_size
     }
 
     # Load data
-    if data_index == 0:
-        ds_train, ds_val = load_cifar10(subset_ratio=subset_ratio)
-        run_config["num_classes"] = 10
-    else:
-        ds_train, ds_val = load_cifar100(subset_ratio=subset_ratio)
-        run_config["num_classes"] = 100
+    ds_train, ds_val = load_osc_data(dtype, mode, hist, pred)
     dl_train = DataLoader(ds_train, batch_size=batch_size, shuffle=True)
     dl_val = DataLoader(ds_val, batch_size=batch_size, shuffle=False)
 

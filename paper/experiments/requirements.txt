@@ -107,6 +107,7 @@ pillow==10.3.0
     #   torchvision
 platformdirs==4.2.2
     # via wandb
+polars==1.1.0
 protobuf==5.27.1
     # via wandb
 psutil==5.9.8

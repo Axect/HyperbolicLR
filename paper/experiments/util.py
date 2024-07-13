@@ -5,7 +5,9 @@ import torchvision
 import torchvision.transforms as transforms
 import wandb
 
+import polars as pl
 import numpy as np
+from numpy.lib.stride_tricks import sliding_window_view
 import random
 
 
@@ -67,6 +69,103 @@ def load_cifar100(subset_ratio=0.1):
     trainset = trainsubset
     testset = testsubset
     return trainset, testset
+
+
+# Load Data
+def load_osc_data(dtype="simple", mode="S", hist=10, pred=10, ratio=0.8):
+    """
+    dtype:
+        - "simple": Simple Harmonic Oscillator
+        - "damped": Damped Harmonic Oscillator 
+
+    mode:
+        - "S": Single input, Single target ('x')
+        - "M": Multi input, Multi target
+        - "MS": Multi input, Single target ('x')
+
+    Columns:
+        - t: Time (Not used)
+        - x: Position
+        - v: Velocity
+        - a: Acceleration
+        - zeta: Damping parameter (0, 0.1, 0.2)
+    """
+    df = pl.read_parquet("./data/damped_sho.parquet")
+    df = df.drop("t")
+
+    # Simple or Damped
+    if dtype == "simple":
+        df = df.filter(pl.col('zeta') == 0)
+    elif dtype == "damped":
+        df = df.filter(pl.col('zeta') == 0.01)
+    else:
+        raise ValueError("dtype must be 'simple' or 'damped'")
+
+    # Normalize columns
+    df_min = df.min()
+    df_max = df.max()
+
+    def normalize(col):
+        return (col - df_min[col.name]) / (df_max[col.name] - df_min[col.name])
+
+    df = df.with_columns([
+        pl.all().map(normalize)
+    ])
+
+    if mode == 'S':
+        x = df['x'].to_numpy()
+
+        # Sliding window
+        x_slide = sliding_window_view(x, hist + pred)   # M x (hist + pred)
+        x_hist  = x_slide[:, :hist]                     # M x hist
+        x_pred  = x_slide[:, -pred:]                    # M x pred
+
+        input_data = torch.tensor(x_hist, dtype=torch.float32).unsqueeze(2)
+        label_data = torch.tensor(x_pred, dtype=torch.float32).unsqueeze(2)
+    elif mode == 'MS' or mode == 'M':
+        x = df['x'].to_numpy()
+        v = df['v'].to_numpy()
+        a = df['a'].to_numpy()
+
+        # Sliding window
+        x_slide = sliding_window_view(x, hist + pred)   # N x (hist + pred)
+        v_slide = sliding_window_view(v, hist + pred)   # N x (hist + pred)
+        a_slide = sliding_window_view(a, hist + pred)   # N x (hist + pred)
+        x_hist  = x_slide[:, :hist]                     # N x hist
+        v_hist  = v_slide[:, :hist]                     # N x hist
+        a_hist  = a_slide[:, :hist]                     # N x hist
+        x_pred  = x_slide[:, -pred:]                    # N x pred
+        v_pred  = v_slide[:, -pred:]                    # N x pred
+        a_pred  = a_slide[:, -pred:]                    # N x pred
+        x_hist = np.expand_dims(x_hist, axis=2)         # N x hist x 1
+        v_hist = np.expand_dims(v_hist, axis=2)         # N x hist x 1
+        a_hist = np.expand_dims(a_hist, axis=2)         # N x hist x 1
+        
+        input_array = np.concatenate([x_hist, v_hist, a_hist], axis=2) # N x hist x 3
+        input_data = torch.tensor(input_array, dtype=torch.float32)
+
+        if mode == 'MS':
+            label_data = torch.tensor(x_pred, dtype=torch.float32)
+            label_data = label_data.unsqueeze(2)
+        elif mode == 'M':
+            x_pred = np.expand_dims(x_pred, axis=2)
+            v_pred = np.expand_dims(v_pred, axis=2)
+            a_pred = np.expand_dims(a_pred, axis=2)
+            label_array = np.concatenate([x_pred, v_pred, a_pred], axis=2) # N x pred x 3
+            label_data = torch.tensor(label_array, dtype=torch.float32)
+        else:
+            raise ValueError("mode must be 'MS' or 'M'")
+    else:
+        raise ValueError("mode must be 'S' or 'M'")
+
+    print(f"Input shape: {input_data.shape}")
+    print(f"Label shape: {label_data.shape}")
+
+    ds = TensorDataset(input_data, label_data)
+    train_size = int(0.8 * len(ds))
+    val_size = len(ds) - train_size
+    ds_train, ds_val = random_split(ds, [train_size, val_size])
+    return ds_train, ds_val
 
 
 def set_seed(seed):
