@@ -361,7 +361,7 @@ def main():
                     hparams["upper_bound"] = upper_bound
                     run_config["scheduler_params"] = {"upper_bound": upper_bound, "max_iter": epochs, "init_lr": lr, "infimum_lr": infimum_lr}
 
-            val_loss, _ = run(run_config, hparams, seeds=seeds, dl_train=dl_train, dl_val=dl_val, device=device)
+            val_loss = run(run_config, hparams, seeds=seeds, dl_train=dl_train, dl_val=dl_val, device=device)
             return val_loss
 
         study_name = f"{project_name}-{optimizer_name}-{scheduler_name}"
