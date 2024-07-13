@@ -127,7 +127,7 @@ def main():
     model = globals()[models[model]]
 
     # Survey dtype, mode
-    dtypes = ["simple", "damped"]
+    dtypes = ["simple", "damped", "total"]
     #modes  = ["S", "MS", "M"]
     dtype = survey.routines.select(
         "Select dtype",

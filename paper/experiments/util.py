@@ -93,11 +93,16 @@ def load_osc_data(dtype="simple", mode="S", hist=10, pred=10, ratio=0.8):
     df = pl.read_parquet("./data/damped_sho.parquet")
     df = df.drop("t")
 
-    # Simple or Damped
+    # Simple or Damped or Total
     if dtype == "simple":
         df = df.filter(pl.col('zeta') == 0)
     elif dtype == "damped":
         df = df.filter(pl.col('zeta') == 0.01)
+    elif dtype == "total":
+        df1 = df.filter(pl.col('zeta') == 0)
+        df2 = df.filter(pl.col('zeta') == 0.01)
+        df3 = df.filter(pl.col('zeta') == 0.02)
+        df = pl.concat([df1, df2, df3])
     else:
         raise ValueError("dtype must be 'simple' or 'damped'")
 
@@ -117,15 +122,40 @@ def load_osc_data(dtype="simple", mode="S", hist=10, pred=10, ratio=0.8):
     ])
 
     if mode == 'S':
-        x = df['x'].to_numpy()
+        if dtype == "total":
+            df1 = df.filter(pl.col('zeta') == 0)
+            df2 = df.filter(pl.col('zeta') == 0.01)
+            df3 = df.filter(pl.col('zeta') == 0.02)
+            x1  = df1['x'].to_numpy()
+            x2  = df2['x'].to_numpy()
+            x3  = df3['x'].to_numpy()
+            x1_slide = sliding_window_view(x1, hist + pred)
+            x2_slide = sliding_window_view(x2, hist + pred)
+            x3_slide = sliding_window_view(x3, hist + pred)
+            x1_hist  = x1_slide[:, :hist]
+            x2_hist  = x2_slide[:, :hist]
+            x3_hist  = x3_slide[:, :hist]
+            x1_pred  = x1_slide[:, -pred:]
+            x2_pred  = x2_slide[:, -pred:]
+            x3_pred  = x3_slide[:, -pred:]
+            input1 = torch.tensor(x1_hist, dtype=torch.float32).unsqueeze(2)
+            input2 = torch.tensor(x2_hist, dtype=torch.float32).unsqueeze(2)
+            input3 = torch.tensor(x3_hist, dtype=torch.float32).unsqueeze(2)
+            label1 = torch.tensor(x1_pred, dtype=torch.float32).unsqueeze(2)
+            label2 = torch.tensor(x2_pred, dtype=torch.float32).unsqueeze(2)
+            label3 = torch.tensor(x3_pred, dtype=torch.float32).unsqueeze(2)
+            input_data = torch.cat([input1, input2, input3], dim=0)
+            label_data = torch.cat([label1, label2, label3], dim=0)
+        else:
+            x = df['x'].to_numpy()
 
-        # Sliding window
-        x_slide = sliding_window_view(x, hist + pred)   # M x (hist + pred)
-        x_hist  = x_slide[:, :hist]                     # M x hist
-        x_pred  = x_slide[:, -pred:]                    # M x pred
+            # Sliding window
+            x_slide = sliding_window_view(x, hist + pred)   # M x (hist + pred)
+            x_hist  = x_slide[:, :hist]                     # M x hist
+            x_pred  = x_slide[:, -pred:]                    # M x pred
 
-        input_data = torch.tensor(x_hist, dtype=torch.float32).unsqueeze(2)
-        label_data = torch.tensor(x_pred, dtype=torch.float32).unsqueeze(2)
+            input_data = torch.tensor(x_hist, dtype=torch.float32).unsqueeze(2)
+            label_data = torch.tensor(x_pred, dtype=torch.float32).unsqueeze(2)
     elif mode == 'MS' or mode == 'M':
         x = df['x'].to_numpy()
         v = df['v'].to_numpy()
