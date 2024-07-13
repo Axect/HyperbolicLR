@@ -102,14 +102,18 @@ def load_osc_data(dtype="simple", mode="S", hist=10, pred=10, ratio=0.8):
         raise ValueError("dtype must be 'simple' or 'damped'")
 
     # Normalize columns
-    df_min = df.min()
-    df_max = df.max()
+    #df_min = df.min()
+    #df_max = df.max()
 
-    def normalize(col):
-        return (col - df_min[col.name]) / (df_max[col.name] - df_min[col.name])
+    #def normalize(col):
+    #    return (col - df_min[col.name]) / (df_max[col.name] - df_min[col.name])
 
-    df = df.with_columns([
-        pl.all().map(normalize)
+    #df = df.with_columns([
+    #    pl.all().map(normalize)
+    #])
+    df = df.select([
+        ((pl.col(col) - pl.col(col).min()) / (pl.col(col).max() - pl.col(col).min())).alias(col)
+        for col in df.columns
     ])
 
     if mode == 'S':
