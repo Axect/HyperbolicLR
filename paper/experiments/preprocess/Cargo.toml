@@ -4,4 +4,4 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-peroxide = { version = "0.37.6", features = ["csv", "parquet"] }
+peroxide = { version = "0.37.6", features = ["csv", "parquet", "plot"] }
