@@ -120,9 +120,10 @@ def load_osc_data(dtype="simple", mode="S", hist=10, pred=10, ratio=0.8):
 
     if mode == 'S':
         if dtype == "total":
+            print(df)
             df1 = df.filter(pl.col('zeta') == 0)
-            df2 = df.filter(pl.col('zeta') == 0.01)
-            df3 = df.filter(pl.col('zeta') == 0.02)
+            df2 = df.filter(pl.col('zeta') == 0.5)
+            df3 = df.filter(pl.col('zeta') == 1.0)
             x1  = df1['x'].to_numpy()
             x2  = df2['x'].to_numpy()
             x3  = df3['x'].to_numpy()
