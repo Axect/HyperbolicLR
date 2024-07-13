@@ -129,6 +129,7 @@ def load_osc_data(dtype="simple", mode="S", hist=10, pred=10, ratio=0.8):
             x1  = df1['x'].to_numpy()
             x2  = df2['x'].to_numpy()
             x3  = df3['x'].to_numpy()
+            print(x1.shape, x2.shape, x3.shape)
             x1_slide = sliding_window_view(x1, hist + pred)
             x2_slide = sliding_window_view(x2, hist + pred)
             x3_slide = sliding_window_view(x3, hist + pred)
