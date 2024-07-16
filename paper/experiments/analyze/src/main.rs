@@ -2,7 +2,19 @@ use peroxide::fuga::*;
 use dialoguer::{theme::ColorfulTheme, Select};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let models = vec!["CNN", "ViT"];
+    let dataset = vec!["CIFAR10", "OSC", "Integral"];
+    let select = Select::with_theme(&ColorfulTheme::default())
+        .with_prompt("Select Dataset")
+        .items(&dataset)
+        .default(0)
+        .interact()?;
+    let dataset = dataset[select];
+    let models = match dataset {
+        "CIFAR10" => vec!["CNN"],
+        "OSC" => vec!["LSTM"],
+        "Integral" => vec!["TF", "MLP"],
+        _ => panic!("Invalid dataset"),
+    };
     let select = Select::with_theme(&ColorfulTheme::default())
         .with_prompt("Select Model")
         .items(&models)
@@ -20,7 +32,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .unwrap();
     let scheduler = schedulers[select];
 
-    let file = format!("data/Result_CIFAR10_{}-{}.csv", model, scheduler);
+    let file = format!("data/Result_{}_{}-{}.csv", dataset, model, scheduler);
     let mut df = DataFrame::read_csv(&file, ',')?;
     df.as_types(vec![F64, F64, F64, F64, F64, F64, F64, F64, F64, F64, F64, F64, F64]);
 
@@ -61,10 +73,10 @@ fn curve_diff(x: &[f64], y: &[f64]) -> Result<f64, Box<dyn std::error::Error>> {
     let log_y = savitzky_golay_filter_9(&log_y);
     let cx = cubic_hermite_spline(&epoch_x, &log_x, Quadratic)?;
     let cy = cubic_hermite_spline(&epoch_y, &log_y, Quadratic)?;
-    let f = |t: f64| (cx.eval(t).exp() - cy.eval(t).exp()).abs();
+    let f = |t: f64| (cx.eval(t).exp() - cy.eval(t).exp()).abs() / (cx.eval(t).exp() + cy.eval(t).exp());
 
     let epoch_init = 10f64;
-    let epoch_final = x.len() as f64 * 0.8;
+    let epoch_final = x.len() as f64;
     
     let diff = integrate(f, (epoch_init, epoch_final), G7K15R(1e-5, 20));
     Ok(diff / (x.len() as f64))
