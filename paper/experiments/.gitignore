@@ -4,5 +4,6 @@ pscan.py
 
 *.db
 wandb/
-data/
+data/cifar-10-batches-py/
+target/
 __pycache__/
