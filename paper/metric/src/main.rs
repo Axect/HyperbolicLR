@@ -17,17 +17,17 @@ fn main() -> anyhow::Result<()> {
     ];
 
     let hyp_lrs = [
-        HyperbolicLR { init_lr: 1f64, infimum_lr: 1e-4, max_epoch: 250.0, upper_bound: 1000.0 },
-        HyperbolicLR { init_lr: 1f64, infimum_lr: 1e-4, max_epoch: 500.0, upper_bound: 1000.0 },
-        HyperbolicLR { init_lr: 1f64, infimum_lr: 1e-4, max_epoch: 750.0, upper_bound: 1000.0 },
-        HyperbolicLR { init_lr: 1f64, infimum_lr: 1e-4, max_epoch: 1000.0, upper_bound: 1000.0 },
+        HyperbolicLR { init_lr: 1f64, infimum_lr: 1e-3, max_epoch: 250.0, upper_bound: 1000.0 },
+        HyperbolicLR { init_lr: 1f64, infimum_lr: 1e-3, max_epoch: 500.0, upper_bound: 1000.0 },
+        HyperbolicLR { init_lr: 1f64, infimum_lr: 1e-3, max_epoch: 750.0, upper_bound: 1000.0 },
+        HyperbolicLR { init_lr: 1f64, infimum_lr: 1e-3, max_epoch: 1000.0, upper_bound: 1000.0 },
     ];
 
     let exp_hyp_lrs = [
-        ExpHyperbolicLR { init_lr: 1f64, infimum_lr: 1e-4, max_epoch: 250.0, upper_bound: 1000.0 },
-        ExpHyperbolicLR { init_lr: 1f64, infimum_lr: 1e-4, max_epoch: 500.0, upper_bound: 1000.0 },
-        ExpHyperbolicLR { init_lr: 1f64, infimum_lr: 1e-4, max_epoch: 750.0, upper_bound: 1000.0 },
-        ExpHyperbolicLR { init_lr: 1f64, infimum_lr: 1e-4, max_epoch: 1000.0, upper_bound: 1000.0 },
+        ExpHyperbolicLR { init_lr: 1f64, infimum_lr: 1e-3, max_epoch: 250.0, upper_bound: 1000.0 },
+        ExpHyperbolicLR { init_lr: 1f64, infimum_lr: 1e-3, max_epoch: 500.0, upper_bound: 1000.0 },
+        ExpHyperbolicLR { init_lr: 1f64, infimum_lr: 1e-3, max_epoch: 750.0, upper_bound: 1000.0 },
+        ExpHyperbolicLR { init_lr: 1f64, infimum_lr: 1e-3, max_epoch: 1000.0, upper_bound: 1000.0 },
     ];
 
     evaluate_lrs(&poly_lrs)?;
@@ -103,7 +103,7 @@ trait LRScheduler: RootFindingProblem<1, 1, (f64, f64)> + Sized {
         let crit_epoch = bisect.find(self)?;
 
         let f = |epoch: f64| self.function([epoch]).unwrap()[0];
-        Ok(integrate(f, (0f64, crit_epoch[0]), G7K15R(1e-4, 20)))
+        Ok(integrate(f, (0f64, crit_epoch[0]), G7K15R(1e-5, 20)))
     }
 }
 
