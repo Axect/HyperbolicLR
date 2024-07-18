@@ -64,13 +64,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .set_style(PlotStyle::Nature)
         .set_legend(vec![r"$\zeta = 0.00$", r"$\zeta = 0.01$", r"$\zeta = 0.02$"])
         .set_line_style(vec![(0, LineStyle::Solid), (1, LineStyle::Dashed), (2, LineStyle::Dotted)])
-        .set_color(vec![(0, "darkblue"), (1, "darkgreen"), (2, "red")])
+        .set_color(vec![(0, "gray"), (1, "darkblue"), (2, "red")])
         .set_alpha(vec![(0, 0.75), (0, 0.75), (0, 0.75)])
         .set_xlabel(r"$t$")
-        .set_ylabel(r"$x$")
-        .set_ylim((-0.15, 0.15))
+        .set_ylabel(r"$u$")
+        .set_ylim((-0.125, 0.125))
         .set_dpi(600)
-        .set_path("../figs/damped_sho.png")
+        .set_path("../figs/osc.png")
         .savefig()?;
     
     Ok(())
