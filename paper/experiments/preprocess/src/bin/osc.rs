@@ -43,7 +43,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let t_sho = t_vec.take(l);
     let x_sho = x_vec.take(l);
-    let x_damp = x_vec.iter().skip(l).take(l).cloned().collect::<Vec<_>>();
+    let x_1 = x_vec.iter().skip(l).take(l).cloned().collect::<Vec<_>>();
+    let x_2 = x_vec.iter().skip(l * 2).take(l).cloned().collect::<Vec<_>>();
 
     let mut df = DataFrame::new(vec![]);
     df.push("t", Series::new(t_vec));
@@ -58,12 +59,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     plt
         .set_domain(t_sho)
         .insert_image(x_sho)
-        .insert_image(x_damp)
+        .insert_image(x_1)
+        .insert_image(x_2)
         .set_style(PlotStyle::Nature)
-        .set_legend(vec!["SHO", "Damped SHO"])
-        .set_line_style(vec![(0, LineStyle::Solid), (1, LineStyle::Dashed)])
+        .set_legend(vec![r"$\zeta = 0.00$", r"$\zeta = 0.01$", r"$\zeta = 0.02$"])
+        .set_line_style(vec![(0, LineStyle::Solid), (1, LineStyle::Dashed), (2, LineStyle::Dotted)])
+        .set_color(vec![(0, "darkblue"), (1, "darkgreen"), (2, "red")])
+        .set_alpha(vec![(0, 0.75), (0, 0.75), (0, 0.75)])
         .set_xlabel(r"$t$")
         .set_ylabel(r"$x$")
+        .set_ylim((-0.15, 0.15))
         .set_dpi(600)
         .set_path("../figs/damped_sho.png")
         .savefig()?;
