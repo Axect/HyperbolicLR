@@ -51,21 +51,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn curve_diff(x: &[f64], y: &[f64]) -> Result<f64, Box<dyn std::error::Error>> {
-    assert!(x.len() <= y.len());
-
-    let epoch_x = linspace(1, x.len() as f64, x.len());
-    let epoch_y = linspace(1, y.len() as f64, y.len());
-    let x = savitzky_golay_filter_9(&x);
-    let y = savitzky_golay_filter_9(&y);
-    let cx = cubic_hermite_spline(&epoch_x, &x, Quadratic)?;
-    let cy = cubic_hermite_spline(&epoch_y, &y, Quadratic)?;
-    let f = |t: f64| (cx.eval(t) - cy.eval(t)).abs();
-
-    let epoch_init = 10f64;
-    let epoch_final = x.len() as f64 * 0.8;
-    
-    let diff = integrate(f, (epoch_init, epoch_final), G7K15R(1e-5, 20));
-    Ok(diff / (x.len() as f64))
+    let x = savitzky_golay_filter_9(x);
+    let y = savitzky_golay_filter_9(y);
+    Ok(
+        zip_with(|x, y| (x - y).abs() / (x + y), &x, &y)
+            .sum() / x.len() as f64
+    )
 }
 
 /// Savitzky-Golay Filter for smoothing (5-point quadratic)
