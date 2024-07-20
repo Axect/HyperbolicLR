@@ -1,9 +1,13 @@
 import matplotlib.pyplot as plt
 import scienceplots
-
+import numpy as np
 
 # Prepare Data to Plot
-epochs          = [50, 100, 150, 200]
+epochs = [50, 100, 150, 200]
+models = ['TraONet', 'DeepONet', 'LSTM', 'CNN']
+schedulers = ['N', 'P', 'C', 'E', 'H', 'EH']
+
+
 # Validation loss
 TraONet_loss    = [
     [5.0977E-05,4.1721E-05,2.2007E-05,1.0926E-05],
@@ -150,24 +154,103 @@ LSTM_SLCD = [
     [2.16E-01, 2.77E-01, 3.84E-01, 2.03E-01, 3.26E-01, 1.17E-01],
 ]
 
+# Validation loss (assuming these are accuracy values instead of loss)
+CNN_loss = [
+    [0.8551, 0.8645, 0.8663, 0.8671],
+    [0.8604, 0.8734, 0.8767, 0.8797],
+    [0.8615, 0.8720, 0.8764, 0.8770],
+    [0.8550, 0.8685, 0.8722, 0.8739],
+    [0.8588, 0.8687, 0.8737, 0.8794],
+    [0.8602, 0.8686, 0.8736, 0.8766],
+]
+
+# Diff: mean, std
+CNN_diff = [
+    [0.0040, 0.0047],
+    [0.0064, 0.0057],
+    [0.0052, 0.0050],
+    [0.0063, 0.0063],
+    [0.0069, 0.0026],
+    [0.0055, 0.0028],
+]
+
+# y = exp(A) * x**B
+CNN_reg_coeff = [
+    [-0.1950, 0.0102],
+    [-0.2116, 0.0160],
+    [-0.2004, 0.0134],
+    [-0.2178, 0.0160],
+    [-0.2177, 0.0167],
+    [-0.2042, 0.0137],
+]
+
+# Regression stat (R2, Adj-R2, p-value)
+CNN_reg_stat = [
+    [0.9139, 0.8709, 0.0440],
+    [0.9639, 0.9459, 0.0182],
+    [0.9543, 0.9314, 0.0231],
+    [0.9467, 0.9200, 0.0270],
+    [0.9949, 0.9923, 0.0026],
+    [0.9990, 0.9985, 0.0005],
+]
+
+# SLCD (Smoothed Learning Curve Difference)
+CNN_SLCD = [
+    [],
+    [9.39E-04, 1.27E-03, 9.94E-04, 1.05E-03, 1.14E-03, 8.47E-04],
+    [2.22E-03, 3.14E-03, 3.63E-03, 1.72E-03, 3.28E-03, 2.06E-03],
+    [],
+    [1.31E-03, 1.17E-03, 1.13E-03, 5.03E-04, 6.91E-04, 6.08E-04],
+    [6.88E-04, 6.37E-04, 8.53E-04, 6.48E-04, 1.02E-03, 6.46E-04],
+]
 
 
-# Plot params
+# Common plot parameters
 pparam = dict(
-    xlabel = r'$x$',
-    ylabel = r'$y$',
-    title = r"Title",
-    xscale = 'linear',
-    yscale = 'linear',
-    xlim = (0, 1),
-    ylim = (0, 1),
+    xlabel='Epochs',
 )
 
-# Plot
+
+# Function to create bar plot
+def create_bar_plot(ax, model, data, ylabel, ylim=None, yscale='log'):
+    x = np.arange(len(epochs))
+    width = 0.14  # Width of each bar
+    
+    for i, scheduler in enumerate(schedulers):
+        ax.bar(x + i*width, data[i], width, label=scheduler)
+    
+    ax.set_title(f'{model}')
+    ax.set(**pparam, ylabel=ylabel)
+    ax.set_xticks(x + width * 2.5)
+    ax.set_xticklabels(epochs)
+    ax.set(yscale=yscale)
+    if ylim is not None:
+        ax.set_ylim(ylim)
+    
+    # Remove minor ticks
+    ax.xaxis.set_minor_locator(plt.NullLocator())
+
+
+# Set up the plots
 with plt.style.context(["science", "nature"]):
-    fig, ax = plt.subplots()
-    ax.autoscale(tight=True)
-    ax.set(**pparam)
-    ax.plot(x, y, label=r'$y=x$')
-    ax.legend()
-    fig.savefig('plot.png', dpi=600, bbox_inches='tight')
+    # Plot for DeepONet and TraONet
+    fig1, (ax1, ax2) = plt.subplots(1, 2, figsize=(7, 3.5))
+
+    create_bar_plot(ax1, 'DeepONet', DeepONet_loss, 'Loss', (1e-5, 2e-2))
+    create_bar_plot(ax2, 'TraONet', TraONet_loss, 'Loss', (1e-6, 1e-4))
+    
+    ax2.legend(title='Schedulers', bbox_to_anchor=(1.05, 1), loc='upper left')
+    
+    plt.tight_layout()
+    fig1.savefig('figs/deeponet_traonet_loss_comparison.png', dpi=600, bbox_inches='tight')
+
+    # Plot for CNN and LSTM
+    fig2, (ax3, ax4) = plt.subplots(1, 2, figsize=(7, 3.5))
+
+    create_bar_plot(ax3, 'CNN', CNN_loss, 'Accuracy', (0.80, 0.9), 'linear')
+    create_bar_plot(ax4, 'LSTM', LSTM_loss, 'Loss', (1e-8, 1e-5))
+    
+    ax4.legend(title='Schedulers', bbox_to_anchor=(1.05, 1), loc='upper left')
+    
+    plt.tight_layout()
+    fig2.savefig('figs/cnn_lstm_comparison.png', dpi=600, bbox_inches='tight')
