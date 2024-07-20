@@ -236,8 +236,8 @@ with plt.style.context(["science", "nature"]):
     # Plot for DeepONet and TraONet
     fig1, (ax1, ax2) = plt.subplots(1, 2, figsize=(6, 2))
 
-    create_bar_plot(ax1, 'DeepONet', DeepONet_loss, 'Loss', (1e-5, 2e-2))
-    create_bar_plot(ax2, 'TraONet', TraONet_loss, 'Loss', (1e-6, 1e-4))
+    create_bar_plot(ax1, 'DeepONet', DeepONet_loss, 'Validation Loss', (1e-5, 2e-2))
+    create_bar_plot(ax2, 'TraONet', TraONet_loss, 'Validation Loss', (1e-6, 1e-4))
     
     ax2.legend(title='Schedulers', bbox_to_anchor=(1.05, 1), loc='upper left')
     
@@ -248,7 +248,7 @@ with plt.style.context(["science", "nature"]):
     fig2, (ax3, ax4) = plt.subplots(1, 2, figsize=(6, 2))
 
     create_bar_plot(ax3, 'SimpleCNN', CNN_loss, 'Accuracy', (0.82, 0.9), 'linear')
-    create_bar_plot(ax4, 'LSTM Seq2Seq', LSTM_loss, 'Loss', (1e-8, 1e-5))
+    create_bar_plot(ax4, 'LSTM Seq2Seq', LSTM_loss, 'Validation Loss', (1e-8, 1e-5))
     
     ax4.legend(title='Schedulers', bbox_to_anchor=(1.05, 1), loc='upper left')
     
