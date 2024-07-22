@@ -8,15 +8,6 @@ It includes the novel learning rate schedulers, HyperbolicLR and ExpHyperbolicLR
 HyperbolicLR and ExpHyperbolicLR are learning rate schedulers that maintain consistent initial learning rate changes, regardless of the total number of epochs.
 This property helps mitigate the learning curve decoupling problem observed in conventional schedulers, potentially leading to more robust and efficient training of deep neural networks.
 
-## Repository Structure
-
-- `hyperbolic_lr.py`: Implementation of HyperbolicLR and ExpHyperbolicLR schedulers.
-- `paper/`: Directory containing all experimental code, data, and results used in the associated research paper.
-  - `experiments/`: Experimental setup and execution scripts.
-  - `figs/`: Figures generated for the paper.
-  - `results/`: Analysis of experimental results.
-  - `scripts/`: Utility scripts for data processing and visualization.
-
 ## Installation
 
 To use the HyperbolicLR and ExpHyperbolicLR schedulers in your project:
@@ -50,7 +41,7 @@ for epoch in range(num_epochs):
     scheduler.step()
 ```
 
-For more detailed usage and examples, please refer to the paper and experimental code in the `paper/` directory.
+For more detailed usage and examples, please refer to the paper and experimental code in the `github.com/Axect/HyperbolicLR/paper/` directory.
 
 ## Citing
 
