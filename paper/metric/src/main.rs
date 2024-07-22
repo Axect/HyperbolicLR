@@ -35,10 +35,10 @@ fn main() -> anyhow::Result<()> {
     evaluate_lrs(&hyp_lrs)?;
     evaluate_lrs(&exp_hyp_lrs)?;
 
-    plot_lrs(&poly_lrs, "poly")?;
-    plot_lrs(&cos_lrs, "cos")?;
-    plot_lrs(&hyp_lrs, "hyp")?;
-    plot_lrs(&exp_hyp_lrs, "exp_hyp")?;
+    plot_lrs(&poly_lrs, "figs/poly")?;
+    plot_lrs(&cos_lrs, "figs/cos")?;
+    plot_lrs(&hyp_lrs, "figs/hyp")?;
+    plot_lrs(&exp_hyp_lrs, "figs/exp_hyp")?;
 
     Ok(())
 }
