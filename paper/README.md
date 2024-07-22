@@ -21,7 +21,7 @@ This directory contains the experimental code, data, and analysis tools for the 
 ### `main_cifar10.py`
 
 This script runs experiments on the CIFAR-10 dataset. It includes:
-- Model selection (SimpleCNN, ViT)
+- Model selection (SimpleCNN or your own model)
 - Hyperparameter optimization
 - Various run modes (Run, Search, Compare, Optimize, Optimize-Compare)
 - Integration with Weights & Biases for experiment tracking
@@ -155,53 +155,39 @@ For Rust components, ensure you have Rust installed. Dependencies for Rust are m
      cargo run --release
      ```
 
-2. Run CIFAR-10 experiments:
-   ```sh
-   python main_cifar10.py
-   ```
+3. Run experiments:
+   
+   - CIFAR-10
+     ```sh
+     python main_cifar10.py
+     ```
 
-3. Run oscillation prediction experiments:
-   ```sh
-   python main_osc.py
-   ```
+   - Oscillation
+     ```sh
+     python main_osc.py
+     ```
 
-4. Run integral operator learning experiments:
-   ```sh
-   python main_integral.py
-   ```
+   - Integral
+     ```sh
+     python main_integral.py
+     ```
 
 ## Analysis
 
 After running experiments:
 
 1. Use the Rust-based analysis tools in the `analyze/` directory:
-   ```
+
+   ```sh
    cd analyze
-   cargo run
+   cargo run --release
    ```
+
    or for accuracy analysis:
-   ```
-   cargo run --bin acc
-   ```
 
-2. Generate metrics and plots using the `metric/` tool:
+   ```sh
+   cargo run --release --bin acc
    ```
-   cd metric
-   cargo run
-   ```
-
-3. If needed, regenerate oscillation data:
-   ```
-   cd osc
-   cargo run
-   ```
-
-4. Analyze learning curves:
-   ```
-   cd learning_curve_example
-   cargo run
-   ```
-
 
 ## Additional Notes
 
