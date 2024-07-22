@@ -1,9 +1,0 @@
-hyperbolic_lr.py
-mamba.py
-pscan.py
-
-*.db
-wandb/
-data/cifar-10-batches-py/
-target/
-__pycache__/

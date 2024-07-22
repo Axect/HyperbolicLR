@@ -1,5 +1,5 @@
 [package]
-name = "preprocess"
+name = "osc"
 version = "0.1.0"
 edition = "2021"
 

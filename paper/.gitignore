@@ -1,0 +1,6 @@
+target/
+wandb/
+__pycache__/
+data/cifar-10-batches-py/
+
+hyperbolic_lr.py
