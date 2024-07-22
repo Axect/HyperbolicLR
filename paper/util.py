@@ -103,16 +103,6 @@ def load_osc_data(dtype="simple", mode="S", hist=10, pred=10, ratio=0.8):
     else:
         raise ValueError("dtype must be 'simple' or 'damped'")
 
-    # Normalize columns
-    #df_min = df.min()
-    #df_max = df.max()
-
-    #def normalize(col):
-    #    return (col - df_min[col.name]) / (df_max[col.name] - df_min[col.name])
-
-    #df = df.with_columns([
-    #    pl.all().map(normalize)
-    #])
     df = df.select([
         ((pl.col(col) - pl.col(col).min()) / (pl.col(col).max() - pl.col(col).min())).alias(col)
         for col in df.columns
@@ -199,6 +189,19 @@ def load_osc_data(dtype="simple", mode="S", hist=10, pred=10, ratio=0.8):
     val_size = len(ds) - train_size
     ds_train, ds_val = random_split(ds, [train_size, val_size])
     return ds_train, ds_val
+
+
+def load_integral():
+    def load(file_path):
+        df = pl.read_parquet(file_path)
+        tensors = [
+            torch.tensor(df[col].to_numpy().reshape(-1, 100), dtype=torch.float32) for col in df.columns
+        ]
+        return tensors
+    
+    train_tensors = load('data/train.parquet')
+    val_tensors = load('data/val.parquet')
+    return train_tensors, val_tensors
 
 
 def set_seed(seed):
@@ -292,3 +295,56 @@ class Trainer:
             return val_loss, accuracy
         else:
             return val_loss
+
+
+class OperatorTrainer:
+    def __init__(self, model, optimizer, scheduler, device="cpu"):
+        self.model = model.to(device)
+        self.optimizer = optimizer
+        self.scheduler = scheduler
+        self.device = device
+
+    def step(self, u, y):
+        pred = self.model(u.to(self.device), y.to(self.device))
+        return pred
+
+    def train_epoch(self, dataloader):
+        self.model.train()
+        epoch_loss = 0
+        for u, y, Guy in dataloader:
+            self.optimizer.zero_grad()
+            pred = self.step(u, y)
+            loss = F.mse_loss(pred, Guy.to(self.device))
+            loss.backward()
+            self.optimizer.step()
+            epoch_loss += loss.item()
+        epoch_loss /= len(dataloader)
+        return epoch_loss
+
+    def evaluate(self, dataloader):
+        self.model.eval()
+        eval_loss = 0
+        with torch.no_grad():
+            for u, y, Guy in dataloader:
+                pred = self.step(u, y)
+                loss = F.mse_loss(pred, Guy.to(self.device))
+                eval_loss += loss.item()
+        eval_loss /= len(dataloader)
+        return eval_loss
+
+    def train(self, dl_train, dl_val, epochs=500):
+        val_loss = 0.0
+        for epoch in range(epochs):
+            train_loss = self.train_epoch(dl_train)
+            val_loss = self.evaluate(dl_val)
+            if self.scheduler is not None:
+                self.scheduler.step()
+            wandb.log({
+                "train_loss": train_loss,
+                "val_loss": val_loss,
+                "epoch": epoch+1,
+                "lr": self.optimizer.param_groups[0]['lr']
+            })
+            if epoch % 10 == 0:
+                print(f"Epoch {epoch+1:03}\ttrain_loss={train_loss:.4e}\tval_loss={val_loss:.4e}")
+        return val_loss

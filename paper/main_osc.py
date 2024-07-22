@@ -126,19 +126,15 @@ def main():
     )
     model = globals()[models[model]]
 
-    # Survey dtype, mode
+    # Survey dtype
     dtypes = ["simple", "damped", "total"]
-    #modes  = ["S", "MS", "M"]
     dtype = survey.routines.select(
         "Select dtype",
         options=dtypes
     )
     dtype = dtypes[dtype]
-    #mode = survey.routines.select(
-    #    "Select mode",
-    #    options=modes
-    #)
-    #mode = modes[mode]
+
+    # Mode
     mode = "S"
     if mode == "S":
         input_size = 1

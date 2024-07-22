@@ -1,12 +1,10 @@
 import torch
-from torch import nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
-from torch.nn import functional as F
 from hyperbolic_lr import HyperbolicLR, ExpHyperbolicLR
 
-from model import SimpleCNN
-from util import load_cifar10, load_cifar100, Trainer, set_seed
+from model import DeepONet, TFONet
+from util import load_integral, set_seed, OperatorTrainer
 
 import optuna
 
@@ -29,7 +27,6 @@ def run(run_config, hparams, seeds, dl_train, dl_val, device='cpu'):
     scheduler_name = run_config['scheduler_name']
     scheduler_params = run_config['scheduler_params']
     epochs = run_config['epochs']
-    num_classes = run_config['num_classes']
 
     group_name = f"{optimizer_name}_{scheduler_name}({epochs})["
     tags = [f"{epochs}", optimizer_name, scheduler_name]
@@ -43,13 +40,12 @@ def run(run_config, hparams, seeds, dl_train, dl_val, device='cpu'):
     group_name = group_name[:-1] + "]"
 
     val_loss = 0.0
-    accuracy = 0.0
     for seed in seeds:
         set_seed(seed)
 
         run_name = f"{group_name}[{seed}]"
 
-        net = model(hparams, num_classes=num_classes, device=device)
+        net = model(hparams, device=device)
         optimizer_ = optimizer(net.parameters(), **optimizer_params)
         if scheduler is not None:
             scheduler_ = scheduler(optimizer_, **scheduler_params)
@@ -64,18 +60,16 @@ def run(run_config, hparams, seeds, dl_train, dl_val, device='cpu'):
             config=hparams
         )
 
-        trainer = Trainer(net, optimizer_, scheduler_, criterion=nn.CrossEntropyLoss(label_smoothing=0.1), acc=True, device=device)
-        val_loss_, accuracy_ = trainer.train(dl_train, dl_val, epochs)
-        val_loss += val_loss_
-        accuracy += accuracy_
+        trainer = OperatorTrainer(net, optimizer_, scheduler_, device=device)
+        val_loss += trainer.train(dl_train, dl_val, epochs)
         wandb.finish()
 
-    return val_loss / len(seeds), accuracy / len(seeds)
+    return val_loss / len(seeds)
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--project', type=str, default="HyperbolicLR-CIFAR10")
+    parser.add_argument('--project', type=str, default="HyperbolicLR-DeepONet")
     parser.add_argument('--seed', type=int, default=0)
     args = parser.parse_args()
 
@@ -107,21 +101,8 @@ def main():
     )
     run_mode = run_modes[run_mode]
 
-    # Data selection
-    data = ["CIFAR10", "CIFAR100"]
-    data_index = survey.routines.select(
-        "Select dataset",
-        options=data
-    )
-
-    # Subset ratio input
-    subset_ratio = survey.routines.numeric(
-        "Input subset ratio (e.g. 1.0 or 0.1)",
-        decimal=True
-    )
-
     # Model selection
-    models = ["SimpleCNN"]
+    models = ["DeepONet", "KANON", "TFONet"]
     model = survey.routines.select(
         "Select model",
         options=models
@@ -148,6 +129,10 @@ def main():
         decimal=True
     )
 
+    # Load data
+    ds_train, ds_val = load_integral()
+    dl_train = DataLoader(ds_train, batch_size=batch_size, shuffle=True)
+    dl_val = DataLoader(ds_val, batch_size=batch_size, shuffle=False)
 
     # Run configuration
     run_config = {
@@ -169,16 +154,6 @@ def main():
         'batch_size': batch_size,
         'epochs': epochs,
     }
-
-    # Load data
-    if data_index == 0:
-        ds_train, ds_val = load_cifar10(subset_ratio=subset_ratio)
-        run_config["num_classes"] = 10
-    else:
-        ds_train, ds_val = load_cifar100(subset_ratio=subset_ratio)
-        run_config["num_classes"] = 100
-    dl_train = DataLoader(ds_train, batch_size=batch_size, shuffle=True)
-    dl_val = DataLoader(ds_val, batch_size=batch_size, shuffle=False)
 
     hparams = model.default_hparams
 
@@ -325,7 +300,7 @@ def main():
                     hparams["upper_bound"] = upper_bound
                     run_config["scheduler_params"] = {"upper_bound": upper_bound, "max_iter": epochs, "init_lr": lr, "infimum_lr": infimum_lr}
 
-            val_loss, _ = run(run_config, hparams, seeds=seeds, dl_train=dl_train, dl_val=dl_val, device=device)
+            val_loss = run(run_config, hparams, seeds=seeds, dl_train=dl_train, dl_val=dl_val, device=device)
             return val_loss
 
         study_name = f"{project_name}-{optimizer_name}-{scheduler_name}"

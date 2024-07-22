@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 from torch.nn import functional as F
-from vit_pytorch import SimpleViT
+import math
 
 
 # For CNN
@@ -45,29 +45,6 @@ class SimpleCNN(nn.Module):
         for layer in self.fc_layers:
             x = layer(x)
         return x
-
-
-class ViT(nn.Module):
-    default_hparams = {
-        "dim": 32,
-        "heads": 2,
-        "mlp_dim": 512,
-        "depth": 3,
-    }
-    def __init__(self, hparams, num_classes=10, device="cpu"):
-        super(ViT, self).__init__()
-        self.model = SimpleViT(
-            image_size = 32,
-            patch_size = 4,
-            num_classes = num_classes,
-            dim = hparams["dim"],
-            heads = hparams["heads"],
-            mlp_dim = hparams["mlp_dim"],
-            depth = hparams["depth"],
-        )
-
-    def forward(self, x):
-        return self.model(x)
 
 
 # LSTM
@@ -154,3 +131,173 @@ class LSTM_Seq2Seq(nn.Module):
         pred_output = torch.cat(pred_output, dim=1)
 
         return pred_output
+
+
+def create_net(sizes):
+    net = []
+    for i in range(len(sizes)-1):
+        net.append(nn.Linear(sizes[i], sizes[i+1]))
+        if i < len(sizes)-2:
+            net.append(nn.GELU())
+    return nn.Sequential(*net)
+
+
+class DeepONet(nn.Module):
+    default_hparams = {
+        "hidden_size": 1024,
+        "num_layers": 6,
+        "num_branch": 50,
+    }
+    def __init__(self, hparams, device="cpu"):
+        super().__init__()
+
+        self.branch_net = create_net(
+            [100]
+            + [hparams["hidden_size"]]*(hparams["num_layers"]-1)
+            + [hparams["num_branch"]]
+        )
+        self.trunk_net = create_net(
+            [1]
+            + [hparams["hidden_size"]]*(hparams["num_layers"]-1)
+            + [hparams["num_branch"]]
+        )
+        self.bias = nn.Parameter(torch.randn(1), requires_grad=True).to(device)
+        self.device = device
+
+    def forward(self, u, y):
+        window = y.shape[1]
+        branch_out = self.branch_net(u)
+        trunk_out = torch.stack([self.trunk_net(y[:, i:i+1])
+                                for i in range(window)], dim=2)
+        pred = torch.einsum("bp,bpl->bl", branch_out, trunk_out) + self.bias
+        return pred
+
+
+class PositionalEncoding(nn.Module):
+    def __init__(self, d_model, max_len=100):
+        super().__init__()
+        pe = torch.zeros(max_len, d_model)
+        position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1)
+        div_term = torch.exp(torch.arange(
+            0, d_model, 2).float() * (-math.log(10000.0) / d_model))
+        pe[:, 0::2] = torch.sin(position * div_term)
+        pe[:, 1::2] = torch.cos(position * div_term)
+        pe = pe.unsqueeze(0)
+        self.register_buffer('pe', pe)
+
+    def forward(self, x):
+        """
+        - x: (B, W, d_model)
+        - self.pe: (1, M, d_model)
+        - self.pe[:, :x.size(1), :]: (1, W, d_model)
+        - output: (B, W, d_model)
+        """
+        x = x + self.pe[:, :x.size(1), :]
+        return x
+
+
+class TFEncoder(nn.Module):
+    def __init__(self, d_model, nhead, num_layers, dim_feedforward, dropout=0.0):
+        super().__init__()
+        self.d_model = d_model
+        self.embedding = nn.Linear(1, d_model)
+        self.pos_encoder = PositionalEncoding(d_model)
+        self.encoder_layer = nn.TransformerEncoderLayer(
+            d_model=d_model,
+            nhead=nhead,
+            dim_feedforward=dim_feedforward,
+            dropout=dropout,
+            batch_first=True
+        )
+        self.transformer_encoder = nn.TransformerEncoder(
+            self.encoder_layer, num_layers)
+
+    def forward(self, x):
+        """
+        - x: (B, W1, 1)
+        - x (after embedding): (B, W1, d_model)
+        - out: (B, W1, d_model)
+        """
+        x = self.embedding(x) * math.sqrt(self.d_model)
+        x = self.pos_encoder(x)
+        out = self.transformer_encoder(x)
+        return out
+
+
+class TFDecoder(nn.Module):
+    def __init__(self, d_model, nhead, num_layers, dim_feedforward, dropout=0.0):
+        super().__init__()
+        self.d_model = d_model
+        self.embedding = nn.Linear(1, d_model)
+        self.pos_encoder = PositionalEncoding(d_model)
+        self.decoder_layer = nn.TransformerDecoderLayer(
+            d_model=d_model,
+            nhead=nhead,
+            dim_feedforward=dim_feedforward,
+            dropout=dropout,
+            batch_first=True
+        )
+        self.transformer_decoder = nn.TransformerDecoder(
+            self.decoder_layer, num_layers)
+        self.fc = nn.Linear(d_model, 1)
+
+    def forward(self, x, memory):
+        """
+        - x: (B, W2, 1)
+        - x (after embedding): (B, W2, d_model)
+        - memory: (B, W1, d_model)
+        - out: (B, W2, d_model)
+        - out (after fc): (B, W2, 1)
+        - out (after squeeze): (B, W2)
+        """
+        x = self.embedding(x) * math.sqrt(self.d_model)
+        x = self.pos_encoder(x)
+        out = self.transformer_decoder(x, memory)
+        out = self.fc(out)
+        out = out.squeeze(-1)
+        return out
+
+
+class TFONet(nn.Module):
+    default_hparams = {
+        "d_model": 128,
+        "nhead": 2,
+        "dim_feedforward": 512,
+        "num_layers": 3,
+        "dropout": 0.0
+    }
+    def __init__(self, hparams, device="cpu"):
+        super().__init__()
+
+        d_model = hparams["d_model"]
+        nhead = hparams["nhead"]
+        num_layers = hparams["num_layers"]
+        dim_feedforward = hparams["dim_feedforward"]
+        dropout = hparams["dropout"]
+
+        self.branch_net = TFEncoder(
+            d_model, nhead, num_layers, dim_feedforward, dropout)
+        self.trunk_net = TFDecoder(
+            d_model, nhead, num_layers, dim_feedforward, dropout)
+        self.device = device
+
+    def forward(self, u, y):
+        """
+        - u: (B, W1)
+        - y: (B, W2)
+        - u (after reshape): (B, W1, 1)
+        - y (after reshape): (B, W2, 1)
+        - memory: (B, W1, d_model)
+        - o: (B, W2)
+        """
+        B, W1 = u.shape
+        _, W2 = y.shape
+        u = u.view(B, W1, 1)
+        y = y.view(B, W2, 1)
+
+        # Encoding
+        memory = self.branch_net(u)
+
+        # Decoding
+        o = self.trunk_net(y, memory)
+        return o
