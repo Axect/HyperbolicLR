@@ -48,7 +48,15 @@ For more detailed usage and examples, please refer to the paper and experimental
 If you use HyperbolicLR or ExpHyperbolicLR in your research, please cite our paper:
 
 ```
-[Citation information will be added upon publication]
+@misc{kim2024hyperboliclr,
+  title={HyperbolicLR: Epoch insensitive learning rate scheduler}, 
+  author={Tae-Geun Kim},
+  year={2024},
+  eprint={2407.15200},
+  archivePrefix={arXiv},
+  primaryClass={cs.LG},
+  url={https://arxiv.org/abs/2407.15200}, 
+}
 ```
 
 ## License
