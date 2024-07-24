@@ -28,7 +28,6 @@ class HyperbolicLR:
         Update the learning rate
         """
         self._update_learning_rate()
-        #self._optimizer.step()
 
     def zero_grad(self):
         """
@@ -88,10 +87,9 @@ class ExpHyperbolicLR:
 
     def step(self):
         """
-        Step with the inner optimizer and update the learning rate
+        Update the learning rate
         """
         self._update_learning_rate()
-        self._optimizer.step()
 
     def zero_grad(self):
         """
