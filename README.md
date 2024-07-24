@@ -1,6 +1,6 @@
-# Hyperbolic Learning rate Scheduler
+# Hyperbolic Learning Rate Scheduler
 
-This repository contains the implementation and experimental code for the paper "_HyperbolicLR: Epoch Insensitive Learning Rate Scheduler_".
+This repository contains the implementation and experimental code for the paper "[_HyperbolicLR: Epoch Insensitive Learning Rate Scheduler_](https://arxiv.org/abs/2407.15200)".
 It includes the novel learning rate schedulers, HyperbolicLR and ExpHyperbolicLR, designed to address the learning curve decoupling problem in deep learning.
 
 ## Overview
@@ -41,7 +41,7 @@ for epoch in range(num_epochs):
     scheduler.step()
 ```
 
-For more detailed usage and examples, please refer to the paper and experimental code in the `github.com/Axect/HyperbolicLR/paper/` directory.
+For more detailed usage and examples, please refer to the paper and experimental code in the `paper/` directory.
 
 ## Citing
 
