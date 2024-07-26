@@ -31,8 +31,6 @@ with plt.style.context(["science", "nature"]):
     fig, ax = plt.subplots()
     ax.autoscale(tight=True)
     ax.set(**pparam)
-    #ax.axhline(0, color='k')
-    #ax.axvline(0, color='k')
     ax.plot(x, y, '-', color='darkblue', label=r'$h(n;N,U)$')
     ax.plot(x_u, z, ':', color='darkblue', label=r'Asymptote', alpha=0.5)
     ax.legend()

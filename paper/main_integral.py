@@ -314,7 +314,7 @@ def main():
         )
         study.optimize(object, n_trials=25)
     elif run_mode == 'Optimize-Compare':
-        # Load study
+        # Load all studies
         studies = optuna.get_all_study_names(storage=f"sqlite:///{project_name}.db")
 
         # Select study

@@ -246,17 +246,14 @@ def main():
             run(run_config, hparams, seeds=seeds, dl_train=dl_train, dl_val=dl_val, device=device)
     elif run_mode == 'Compare':
         optimizers = {
-            #"SGD": optim.SGD,
             "Adam": optim.Adam,
             "AdamW": optim.AdamW,
         }
         optimizer_params_no_scheduler = {
-            #"SGD": {"lr": lr / 10, "momentum": 0.9, "weight_decay": 5e-4},
             "Adam": {"lr": lr / 10},
             "AdamW": {"lr": lr / 10},
         }
         optimizer_params = {
-            #"SGD": {"lr": lr, "momentum": 0.9, "weight_decay": 5e-4},
             "Adam": {"lr": lr},
             "AdamW": {"lr": lr},
         }
@@ -371,7 +368,7 @@ def main():
         )
         study.optimize(object, n_trials=25)
     elif run_mode == 'Optimize-Compare':
-        # Load study
+        # Load all studies
         studies = optuna.get_all_study_names(storage=f"sqlite:///{project_name}.db")
 
         # Select study
