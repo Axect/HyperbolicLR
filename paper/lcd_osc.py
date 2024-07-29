@@ -61,7 +61,7 @@ class SplineLR:
 
     def _get_lr(self):
         x = self.iter
-        return self.pchip(x).exp()
+        return np.exp(self.pchip(x))
 
     def _update_learning_rate(self):
         self.iter += 1
