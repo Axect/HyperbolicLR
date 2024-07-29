@@ -1,1 +1,1 @@
-cp ../../hyperbolic_lr.py ./
+cp ../hyperbolic_lr.py ./
