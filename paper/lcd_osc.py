@@ -24,7 +24,7 @@ import itertools
 
 class SplineLR:
     def __init__(self, optimizer, max_iter, init_lr, min_lr, index=1, plus=True):
-        self.optimizer = optimizer
+        self._optimizer = optimizer
         self.max_iter = max_iter
         self.min_lr = min_lr
         self.init_lr = init_lr
@@ -54,7 +54,7 @@ class SplineLR:
         return self._update_learning_rate()
 
     def zero_grad(self):
-        self.optimizer.zero_grad()
+        self._optimizer.zero_grad()
 
     def get_last_lr(self):
         return [param_group['lr'] for param_group in self._optimizer.param_groups]
