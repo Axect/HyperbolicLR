@@ -26,8 +26,8 @@ class SplineLR:
     def __init__(self, optimizer, max_iter, init_lr, min_lr, index=1, plus=True):
         self._optimizer = optimizer
         self.max_iter = max_iter
-        self.min_lr = min_lr
-        self.init_lr = init_lr
+        self.min_lr = np.log(min_lr)
+        self.init_lr = np.log(init_lr)
 
         if index < 1 or index > 3:
             raise ValueError("index should be 1 or 2 or 3")
