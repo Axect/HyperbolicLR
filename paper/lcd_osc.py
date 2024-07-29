@@ -42,15 +42,12 @@ class SplineLR:
         x = np.linspace(0, max_iter, 5)
         y = np.linspace(init_lr, min_lr, 5)
 
-        x_var = x.clone()
-        y_var = y.clone()
-
         sign = 1 if plus else -1
 
-        x_var[index] += delta_x * sign
-        y_var[index] += delta_y * sign
+        x[index] += delta_x * sign
+        y[index] += delta_y * sign
 
-        self.pchip = PchipInterpolator(x_var, y_var)
+        self.pchip = PchipInterpolator(x, y)
         self.iter = 0
 
     def step(self, x):
