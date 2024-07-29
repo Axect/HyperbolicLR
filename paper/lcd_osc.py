@@ -26,14 +26,14 @@ class SplineLR:
     def __init__(self, optimizer, max_iter, init_lr, min_lr, index=1, plus=True):
         self._optimizer = optimizer
         self.max_iter = max_iter
-        self.min_lr = np.log(min_lr)
         self.init_lr = np.log(init_lr)
+        self.min_lr = np.log(min_lr)
 
         if index < 1 or index > 3:
             raise ValueError("index should be 1 or 2 or 3")
         
         theta = np.arctan2(max_iter, init_lr - min_lr)
-        alpha = np.min(np.pi / 2.0 - theta) * 2.0
+        alpha = np.minimum(np.pi / 2.0 - theta, theta) * 2.0
         l = np.sqrt((init_lr - min_lr) ** 2 + max_iter ** 2) / 4.0
 
         delta_x = l * np.tan(alpha) * np.sin(theta)
