@@ -50,8 +50,8 @@ class SplineLR:
         self.pchip = PchipInterpolator(x, y)
         self.iter = 0
 
-    def step(self, x):
-        return self._update_learning_rate(x)
+    def step(self):
+        return self._update_learning_rate()
 
     def zero_grad(self):
         self.optimizer.zero_grad()
@@ -63,7 +63,7 @@ class SplineLR:
         x = self.iter
         return self.pchip(x).exp()
 
-    def _update_learning_rate(self, x):
+    def _update_learning_rate(self):
         self.iter += 1
         lr = self._get_lr()
         for param_group in self._optimizer.param_groups:
