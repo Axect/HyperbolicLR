@@ -28,14 +28,14 @@ class SplineLR:
         self.max_iter = max_iter
         self.init_lr = init_lr
         self.min_lr = min_lr
-        init_lr = np.log(init_lr)
-        min_lr = np.log(min_lr)
+        #init_lr = np.log(init_lr)
+        #min_lr = np.log(min_lr)
 
         if index < 1 or index > 3:
             raise ValueError("index should be 1 or 2 or 3")
         
         theta = np.arctan2(max_iter, init_lr - min_lr)
-        alpha = np.minimum(np.pi / 2.0 - theta, theta) * 2.0
+        alpha = np.minimum(np.pi / 2.0 - theta, theta) * 2000.0
         l = np.sqrt((init_lr - min_lr) ** 2 + max_iter ** 2) / 4.0
 
         delta_x = l * np.tan(alpha) * np.sin(theta)
@@ -63,7 +63,8 @@ class SplineLR:
 
     def _get_lr(self):
         x = self.iter
-        return np.exp(self.pchip(x))
+        #return np.exp(self.pchip(x))
+        return self.pchip(x)
 
     def _update_learning_rate(self):
         self.iter += 1
