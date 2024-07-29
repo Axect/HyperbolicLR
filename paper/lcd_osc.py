@@ -14,6 +14,7 @@ import optuna
 from optuna.samplers import TPESampler
 
 from scipy.interpolate import PchipInterpolator
+import numpy as np
 
 import wandb
 import survey
