@@ -31,15 +31,15 @@ class SplineLR:
         if index < 1 or index > 3:
             raise ValueError("index should be 1 or 2 or 3")
         
-        theta = torch.atan2(max_iter, init_lr - min_lr)
-        alpha = torch.min(torch.pi / 2.0 - theta) * 2.0
-        l = torch.sqrt((init_lr - min_lr) ** 2 + max_iter ** 2) / 4.0
+        theta = np.atan2(max_iter, init_lr - min_lr)
+        alpha = np.min(np.pi / 2.0 - theta) * 2.0
+        l = np.sqrt((init_lr - min_lr) ** 2 + max_iter ** 2) / 4.0
 
-        delta_x = l * torch.tan(alpha) * torch.sin(theta)
-        delta_y = l * torch.tan(alpha) * torch.cos(theta)
+        delta_x = l * np.tan(alpha) * np.sin(theta)
+        delta_y = l * np.tan(alpha) * np.cos(theta)
 
-        x = torch.linspace(0, max_iter, 5)
-        y = torch.linspace(init_lr, min_lr, 5)
+        x = np.linspace(0, max_iter, 5)
+        y = np.linspace(init_lr, min_lr, 5)
 
         x_var = x.clone()
         y_var = y.clone()
