@@ -32,7 +32,7 @@ class SplineLR:
         if index < 1 or index > 3:
             raise ValueError("index should be 1 or 2 or 3")
         
-        theta = np.atan2(max_iter, init_lr - min_lr)
+        theta = np.arctan2(max_iter, init_lr - min_lr)
         alpha = np.min(np.pi / 2.0 - theta) * 2.0
         l = np.sqrt((init_lr - min_lr) ** 2 + max_iter ** 2) / 4.0
 
