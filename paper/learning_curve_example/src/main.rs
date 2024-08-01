@@ -1,31 +1,32 @@
 use peroxide::fuga::*;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut df = DataFrame::read_csv("data/deeponet_learning_curve.csv", ',')?;
-    df.as_types(vec![F64, F64, F64, F64, F64]);
-    df.print();
+    let mut df_c = DataFrame::read_csv("./data/Result_OSC_LSTM-C.csv", ',')?;
+    let mut df_eh = DataFrame::read_csv("./data/Result_OSC_LSTM-EH.csv", ',')?;
+    df_c.as_types(vec![F64, F64, F64, F64, F64, F64, F64, F64, F64, F64, F64, F64, F64]);
+    df_eh.as_types(vec![F64, F64, F64, F64, F64, F64, F64, F64, F64, F64, F64, F64, F64]);
 
-    let p50: Vec<f64> = df["p50"].to_vec();
-    let p100: Vec<f64> = df["p100"].to_vec();
-    let eh50: Vec<f64> = df["eh50"].to_vec();
-    let eh100: Vec<f64> = df["eh100"].to_vec();
+    let c50: Vec<f64> = df_c["C50_val_loss"].to_vec();
+    let c100: Vec<f64> = df_c["C100_val_loss"].to_vec();
+    let eh50: Vec<f64> = df_eh["EH50_val_loss"].to_vec();
+    let eh100: Vec<f64> = df_eh["EH100_val_loss"].to_vec();
 
-    let step_50 = linspace(1, p50.len() as f64, p50.len());
-    let step_100 = linspace(1, p100.len() as f64, p100.len());
+    let step_50 = linspace(1, c50.len() as f64, c50.len());
+    let step_100 = linspace(1, c100.len() as f64, c100.len());
 
     // Measure
-    let diff_poly = curve_diff(&p50, &p100)?;
+    let diff_poly = curve_diff(&c50, &c100)?;
     let diff_eh = curve_diff(&eh50, &eh100)?;
 
-    println!("Polynomial: {:.4e}", diff_poly);
+    println!("CosineAnneling: {:.4e}", diff_poly);
     println!("ExpHyperbolic: {:.4e}", diff_eh);
 
     // Plotting
-    // Polynomial
+    // CosineAnneling
     let mut plt = Plot2D::new();
-    plt.insert_pair((step_50.clone(), p50.clone()))
-        .insert_pair((step_100.clone(), p100.clone()))
-        .set_legend(vec!["PolynomialLR(50)", "PolynomialLR(100)"])
+    plt.insert_pair((step_50.clone(), c50.clone()))
+        .insert_pair((step_100.clone(), c100.clone()))
+        .set_legend(vec!["CosineAnnelingLR(50)", "CosineAnnelingLR(100)"])
         .set_xlabel("Epoch")
         .set_ylabel("Validation Loss")
         .set_yscale(PlotScale::Log)
@@ -33,7 +34,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .set_color(vec![(0, "darkblue"), (1, "red")])
         .set_style(PlotStyle::Nature)
         .set_dpi(600)
-        .set_path("../figs/deeponet_learning_curve_poly.png")
+        .set_path("../figs/osc_learning_curve_cos.png")
         .savefig()?;
 
     // ExpHyperbolic
@@ -48,7 +49,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .set_color(vec![(0, "darkblue"), (1, "red")])
         .set_style(PlotStyle::Nature)
         .set_dpi(600)
-        .set_path("../figs/deeponet_learning_curve_eh.png")
+        .set_path("../figs/osc_learning_curve_eh.png")
         .savefig()?;
 
     Ok(())
