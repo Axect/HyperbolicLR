@@ -1,7 +1,3 @@
-
-
-
-
 # HyperbolicLR: Epoch-insensitive Learning Rate Scheduler - Experiments
 
 This directory contains the experimental code, data, and analysis tools for the HyperbolicLR paper. It includes implementations of various deep learning models, data processing utilities, and scripts for running experiments and analyzing results.
