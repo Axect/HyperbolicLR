@@ -33,7 +33,7 @@ optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3)
 num_epochs = 100
 
 # Create the HyperbolicLR scheduler
-scheduler = HyperbolicLR(optimizer, upper_bound=250, max_iter=num_epochs, init_lr=1e-2, infimum_lr=1e-5)
+scheduler = HyperbolicLR(optimizer, upper_bound=250, max_iter=num_epochs, infimum_lr=1e-5)
 
 # Training loop
 for epoch in range(num_epochs):
