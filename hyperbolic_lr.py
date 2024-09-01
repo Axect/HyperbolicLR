@@ -8,10 +8,10 @@ class HyperbolicLR:
         optimizer: Optimizer
         upper_bound: Upper bound on various max_iters
         max_iter: Maximum number of iterations
-        init_lr: Initial learning rate
         infimum_lr: The infimum of the hyperbolic learning rate
     """
-    def __init__(self, optimizer, upper_bound=1000, max_iter=100, init_lr=1e-2, infimum_lr=1e-6):
+    def __init__(self, optimizer, upper_bound=1000, max_iter=100, infimum_lr=1e-6):
+        init_lr = optimizer.param_groups[0]['lr']
         if upper_bound < max_iter:
             raise ValueError("upper_bound must be greater than max_iter")
         elif infimum_lr >= init_lr:
@@ -70,10 +70,10 @@ class ExpHyperbolicLR:
         optimizer: Optimizer
         upper_bound: Upper bound on various max_iters
         max_iter: Maximum number of iterations
-        init_lr: Initial learning rate
         infimum_lr: The infimum of the hyperbolic learning rate
     """
-    def __init__(self, optimizer, upper_bound=1000, max_iter=100, init_lr=1e-2, infimum_lr=1e-6):
+    def __init__(self, optimizer, upper_bound=1000, max_iter=100, infimum_lr=1e-6):
+        init_lr = optimizer.param_groups[0]['lr']
         if upper_bound < max_iter:
             raise ValueError("upper_bound must be greater than max_iter")
         elif infimum_lr >= init_lr:
