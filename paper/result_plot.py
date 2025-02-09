@@ -219,7 +219,7 @@ def create_bar_plot(ax, model, data, ylabel, ylim=None, yscale='log'):
     for i, scheduler in enumerate(schedulers):
         ax.bar(x + i*width, data[i], width, label=scheduler)
     
-    ax.set_title(f'{model}')
+    #ax.set_title(f'{model}')
     ax.set(**pparam, ylabel=ylabel)
     ax.set_xticks(x + width * 2.5)
     ax.set_xticklabels(epochs)
