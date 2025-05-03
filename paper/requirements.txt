@@ -151,7 +151,7 @@ survey==5.3.0
 sympy==1.12.1
     # via torch
 threadpoolctl==3.5.0
-torch==2.3.1
+torch==2.7.0
     # via torchvision
 torchvision==0.18.1
 tqdm==4.66.4
