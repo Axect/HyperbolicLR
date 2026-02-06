@@ -53,7 +53,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     df.push("a", Series::new(a_vec));
     df.push("zeta", Series::new(zeta_vec));
     df.print();
-    df.write_parquet("../data/damped_sho.parquet", CompressionOptions::Snappy)?;
+    df.write_parquet("../data/damped_sho.parquet", SNAPPY)?;
 
     let mut plt = Plot2D::new();
     plt

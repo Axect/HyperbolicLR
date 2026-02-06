@@ -145,7 +145,7 @@ impl Dataset {
 
         
         let train_path = format!("{}/train.parquet", data_folder);
-        df.write_parquet(&train_path, CompressionOptions::Uncompressed)?;
+        df.write_parquet(&train_path, UNCOMPRESSED)?;
 
         let mut df = DataFrame::new(vec![]);
         df.push("val_u", Series::new(val_u.data));
@@ -153,7 +153,7 @@ impl Dataset {
         df.push("val_Gu", Series::new(val_Gu.data));
 
         let val_path = format!("{}/val.parquet", data_folder);
-        df.write_parquet(&val_path, CompressionOptions::Uncompressed)?;
+        df.write_parquet(&val_path, UNCOMPRESSED)?;
 
         Ok(())
     }

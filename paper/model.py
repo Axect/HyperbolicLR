@@ -1,6 +1,7 @@
 import torch
 from torch import nn
 from torch.nn import functional as F
+import torchvision.models as tv_models
 import math
 
 
@@ -301,3 +302,77 @@ class TFONet(nn.Module):
         # Decoding
         o = self.trunk_net(y, memory)
         return o
+
+
+# ── ResNet for CIFAR (32x32) ──────────────────────────────────────────────────
+
+class ResNetCIFAR(nn.Module):
+    default_hparams = {"depth": 18}
+
+    def __init__(self, hparams, num_classes=10, device="cpu"):
+        super().__init__()
+        depth = hparams["depth"]
+        builder = {18: tv_models.resnet18, 34: tv_models.resnet34, 50: tv_models.resnet50}
+        net = builder.get(depth, tv_models.resnet18)(weights=None, num_classes=num_classes)
+
+        # Replace ImageNet stem with CIFAR-appropriate 3x3 conv (no aggressive downsample)
+        net.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
+        net.maxpool = nn.Identity()
+
+        self.net = net
+
+    def forward(self, x):
+        return self.net(x)
+
+
+# ── Simple Vision Transformer for CIFAR (32x32) ──────────────────────────────
+
+class SimpleViT(nn.Module):
+    default_hparams = {
+        "patch_size": 4,
+        "embed_dim": 192,
+        "depth": 6,
+        "num_heads": 3,
+    }
+
+    def __init__(self, hparams, num_classes=10, device="cpu"):
+        super().__init__()
+        patch_size = hparams["patch_size"]
+        embed_dim = hparams["embed_dim"]
+        depth = hparams["depth"]
+        num_heads = hparams["num_heads"]
+        img_size = 32
+        num_patches = (img_size // patch_size) ** 2
+
+        self.patch_embed = nn.Conv2d(3, embed_dim, kernel_size=patch_size, stride=patch_size)
+        self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dim))
+        self.pos_embed = nn.Parameter(torch.zeros(1, num_patches + 1, embed_dim))
+
+        encoder_layer = nn.TransformerEncoderLayer(
+            d_model=embed_dim,
+            nhead=num_heads,
+            dim_feedforward=embed_dim * 4,
+            dropout=0.0,
+            activation='gelu',
+            batch_first=True,
+            norm_first=True,
+        )
+        self.encoder = nn.TransformerEncoder(encoder_layer, num_layers=depth)
+        self.norm = nn.LayerNorm(embed_dim)
+        self.head = nn.Linear(embed_dim, num_classes)
+
+        nn.init.trunc_normal_(self.pos_embed, std=0.02)
+        nn.init.trunc_normal_(self.cls_token, std=0.02)
+
+    def forward(self, x):
+        B = x.shape[0]
+        x = self.patch_embed(x)         # (B, embed_dim, H/P, W/P)
+        x = x.flatten(2).transpose(1, 2)  # (B, num_patches, embed_dim)
+
+        cls = self.cls_token.expand(B, -1, -1)
+        x = torch.cat([cls, x], dim=1)  # (B, num_patches+1, embed_dim)
+        x = x + self.pos_embed
+
+        x = self.encoder(x)
+        x = self.norm(x[:, 0])          # CLS token
+        return self.head(x)

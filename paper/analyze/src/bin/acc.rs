@@ -2,7 +2,7 @@ use peroxide::fuga::*;
 use dialoguer::{theme::ColorfulTheme, Select};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let models = vec!["CNN", "ViT"];
+    let models = vec!["CNN", "ResNet", "ViT"];
     let select = Select::with_theme(&ColorfulTheme::default())
         .with_prompt("Select Model")
         .items(&models)
@@ -11,7 +11,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .unwrap();
     let model = models[select];
 
-    let schedulers = vec!["N", "P", "C", "E", "H", "EH"];
+    let schedulers = vec!["N", "P", "C", "E", "H", "EH", "L", "S", "OC", "CY", "WH", "WEH", "WC"];
     let select = Select::with_theme(&ColorfulTheme::default())
         .with_prompt("Select Scheduler")
         .items(&schedulers)

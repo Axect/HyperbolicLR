@@ -1,10 +1,14 @@
 use peroxide::fuga::*;
 use dialoguer::{theme::ColorfulTheme, Select};
 
-const SCHEDULERS: [&str; 6] = ["N", "P", "C", "E", "H", "EH"];
-const TASKMODELS: [&str; 5] = [
+const SCHEDULERS: [&str; 13] = ["N", "P", "C", "E", "H", "EH", "L", "S", "OC", "CY", "WH", "WEH", "WC"];
+const TASKMODELS: [&str; 9] = [
     "CIFAR10_CNN",
     "CIFAR10_CNN_ACC",
+    "CIFAR10_ResNet",
+    "CIFAR10_ResNet_ACC",
+    "CIFAR10_ViT",
+    "CIFAR10_ViT_ACC",
     "OSC_LSTM",
     "Integral_MLP",
     "Integral_TF",
@@ -38,7 +42,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let epoch_150 = linspace(0, 149, 150);
         let epoch_200 = linspace(0, 199, 200);
 
-        let ylabel = if task_model == "CIFAR10_CNN_ACC" {
+        let is_acc = task_model.contains("ACC");
+        let ylabel = if is_acc {
             "Accuracy"
         } else {
             "Validation Loss"
@@ -46,11 +51,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         let mut plt = Plot2D::new();
 
-        if task_model != "CIFAR10_CNN_ACC" {
+        if !is_acc {
             plt.set_yscale(PlotScale::Log)
                 .set_ylim((min * 0.99, max));
         } else {
-            plt.set_ylim((0.5, 0.9));
+            plt.set_ylim((0.5, 0.95));
         }
 
         let full_name = match scheduler {
@@ -60,6 +65,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "E" => "ExponentialLR",
             "H" => "HyperbolicLR",
             "EH" => "ExpHyperbolicLR",
+            "L" => "LinearLR",
+            "S" => "StepLR",
+            "OC" => "OneCycleLR",
+            "CY" => "CyclicLR",
+            "WH" => "Warmup+HyperbolicLR",
+            "WEH" => "Warmup+ExpHyperbolicLR",
+            "WC" => "Warmup+CosineAnnealingLR",
             _ => unreachable!(),
         };
 

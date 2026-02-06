@@ -25,20 +25,16 @@ def load_cifar10(subset_ratio=0.1):
     trainset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform_train)
     testset = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform_test)
 
-    # Randomly choose subset of train data
-    train_size = len(trainset)
-    subset_size = int(train_size * subset_ratio)
-    train_ics = np.random.choice(train_size, subset_size, replace=False)
-    trainsubset = Subset(trainset, train_ics)
+    if subset_ratio < 1.0:
+        train_size = len(trainset)
+        subset_size = int(train_size * subset_ratio)
+        train_ics = np.random.choice(train_size, subset_size, replace=False)
+        trainset = Subset(trainset, train_ics)
 
-    # Randomly choose subset of test data
-    test_size = len(testset)
-    subset_size = int(test_size * subset_ratio)
-    test_ics = np.random.choice(test_size, subset_size, replace=False)
-    testsubset = Subset(testset, test_ics)
-
-    trainset = trainsubset
-    testset = testsubset
+        test_size = len(testset)
+        subset_size = int(test_size * subset_ratio)
+        test_ics = np.random.choice(test_size, subset_size, replace=False)
+        testset = Subset(testset, test_ics)
 
     return trainset, testset
 
@@ -57,19 +53,16 @@ def load_cifar100(subset_ratio=0.1):
     trainset = torchvision.datasets.CIFAR100(root='./data', train=True, download=True, transform=transform_train)
     testset = torchvision.datasets.CIFAR100(root='./data', train=False, download=True, transform=transform_test)
 
-    # Randomly choose subset of train data
-    train_size = len(trainset)
-    subset_size = int(train_size * subset_ratio)
-    train_ics = np.random.choice(train_size, subset_size, replace=False)
-    trainsubset = Subset(trainset, train_ics)
+    if subset_ratio < 1.0:
+        train_size = len(trainset)
+        subset_size = int(train_size * subset_ratio)
+        train_ics = np.random.choice(train_size, subset_size, replace=False)
+        trainset = Subset(trainset, train_ics)
 
-    # Randomly choose subset of test data
-    test_size = len(testset)
-    subset_size = int(test_size * subset_ratio)
-    test_ics = np.random.choice(test_size, subset_size, replace=False)
-    testsubset = Subset(testset, test_ics)
-    trainset = trainsubset
-    testset = testsubset
+        test_size = len(testset)
+        subset_size = int(test_size * subset_ratio)
+        test_ics = np.random.choice(test_size, subset_size, replace=False)
+        testset = Subset(testset, test_ics)
 
     return trainset, testset
 
@@ -218,13 +211,15 @@ def set_seed(seed):
 
 
 class Trainer:
-    def __init__(self, model, optimizer, scheduler, criterion=F.mse_loss, acc=False, device="cpu"):
+    def __init__(self, model, optimizer, scheduler, criterion=F.mse_loss, acc=False,
+                 device="cpu", step_per_batch=False):
         self.model = model.to(device)
         self.optimizer = optimizer
         self.scheduler = scheduler
         self.device = device
         self.criterion = criterion
         self.acc = acc
+        self.step_per_batch = step_per_batch
 
     def step(self, x):
         pred = self.model(x.to(self.device))
@@ -239,6 +234,8 @@ class Trainer:
             loss = self.criterion(pred, y.to(self.device))
             loss.backward()
             self.optimizer.step()
+            if self.step_per_batch and self.scheduler is not None:
+                self.scheduler.step()
             epoch_loss += loss.item()
         epoch_loss /= len(dataloader)
         return epoch_loss
@@ -273,7 +270,7 @@ class Trainer:
                 val_loss, accuracy = self.evaluate(dl_val)
             else:
                 val_loss = self.evaluate(dl_val)
-            if self.scheduler is not None:
+            if self.scheduler is not None and not self.step_per_batch:
                 self.scheduler.step()
             if self.acc:
                 wandb.log({
@@ -301,11 +298,12 @@ class Trainer:
 
 
 class OperatorTrainer:
-    def __init__(self, model, optimizer, scheduler, device="cpu"):
+    def __init__(self, model, optimizer, scheduler, device="cpu", step_per_batch=False):
         self.model = model.to(device)
         self.optimizer = optimizer
         self.scheduler = scheduler
         self.device = device
+        self.step_per_batch = step_per_batch
 
     def step(self, u, y):
         pred = self.model(u.to(self.device), y.to(self.device))
@@ -320,6 +318,8 @@ class OperatorTrainer:
             loss = F.mse_loss(pred, Guy.to(self.device))
             loss.backward()
             self.optimizer.step()
+            if self.step_per_batch and self.scheduler is not None:
+                self.scheduler.step()
             epoch_loss += loss.item()
         epoch_loss /= len(dataloader)
         return epoch_loss
@@ -340,7 +340,7 @@ class OperatorTrainer:
         for epoch in range(epochs):
             train_loss = self.train_epoch(dl_train)
             val_loss = self.evaluate(dl_val)
-            if self.scheduler is not None:
+            if self.scheduler is not None and not self.step_per_batch:
                 self.scheduler.step()
             wandb.log({
                 "train_loss": train_loss,

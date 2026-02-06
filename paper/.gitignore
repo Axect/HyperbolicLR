@@ -5,3 +5,4 @@ data/cifar-10-batches-py/
 data/*.parquet
 
 hyperbolic_lr.py
+*.tar.gz

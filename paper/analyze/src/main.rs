@@ -10,7 +10,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .interact()?;
     let dataset = dataset[select];
     let models = match dataset {
-        "CIFAR10" => vec!["CNN"],
+        "CIFAR10" => vec!["CNN", "ResNet", "ViT"],
         "OSC" => vec!["LSTM"],
         "Integral" => vec!["TF", "MLP"],
         _ => panic!("Invalid dataset"),
@@ -23,7 +23,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .unwrap();
     let model = models[select];
 
-    let schedulers = vec!["N", "P", "C", "E", "H", "EH"];
+    let schedulers = vec!["N", "P", "C", "E", "H", "EH", "L", "S", "OC", "CY", "WH", "WEH", "WC"];
     let select = Select::with_theme(&ColorfulTheme::default())
         .with_prompt("Select Scheduler")
         .items(&schedulers)

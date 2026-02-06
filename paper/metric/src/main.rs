@@ -30,15 +30,24 @@ fn main() -> anyhow::Result<()> {
         ExpHyperbolicLR { init_lr: 1f64, infimum_lr: 1e-3, max_epoch: 1000.0, upper_bound: 1000.0 },
     ];
 
+    let linear_lrs = [
+        LinearLR { init_lr: 1f64, end_lr: 1e-4, max_epoch: 250.0 },
+        LinearLR { init_lr: 1f64, end_lr: 1e-4, max_epoch: 500.0 },
+        LinearLR { init_lr: 1f64, end_lr: 1e-4, max_epoch: 750.0 },
+        LinearLR { init_lr: 1f64, end_lr: 1e-4, max_epoch: 1000.0 },
+    ];
+
     evaluate_lrs(&poly_lrs)?;
     evaluate_lrs(&cos_lrs)?;
     evaluate_lrs(&hyp_lrs)?;
     evaluate_lrs(&exp_hyp_lrs)?;
+    evaluate_lrs(&linear_lrs)?;
 
     plot_lrs(&poly_lrs, "figs/poly")?;
     plot_lrs(&cos_lrs, "figs/cos")?;
     plot_lrs(&hyp_lrs, "figs/hyp")?;
     plot_lrs(&exp_hyp_lrs, "figs/exp_hyp")?;
+    plot_lrs(&linear_lrs, "figs/linear")?;
 
     Ok(())
 }
@@ -210,6 +219,28 @@ impl LRScheduler for ExpHyperbolicLR {
             ((N- epoch) / U * (2f64 - (N + epoch) / U)).sqrt()
             - (N / U * (2f64 - N / U)).sqrt()
         )
+    }
+}
+
+struct LinearLR {
+    pub init_lr: f64,
+    pub end_lr: f64,
+    pub max_epoch: f64,
+}
+
+impl RootFindingProblem<1, 1, (f64, f64)> for LinearLR {
+    fn initial_guess(&self) -> (f64, f64) {
+        (0f64, self.max_epoch)
+    }
+
+    fn function(&self, x: Pt<1>) -> anyhow::Result<Pt<1>> {
+        Ok([self.get_lr(x[0]) - 0.8 * self.init_lr])
+    }
+}
+
+impl LRScheduler for LinearLR {
+    fn get_lr(&self, epoch: f64) -> f64 {
+        self.init_lr + (self.end_lr - self.init_lr) * epoch / self.max_epoch
     }
 }
 
