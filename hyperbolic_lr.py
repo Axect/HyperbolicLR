@@ -42,7 +42,9 @@ class HyperbolicLR:
         if x <= self.warmup_epochs and self.warmup_epochs > 0:
             return self.infimum_lr + (self.init_lr - self.infimum_lr) * x / self.warmup_epochs
 
-        x_decay = x - self.warmup_epochs
+        # Clamp so that stepping beyond max_iter holds the final LR instead of
+        # leaving the hyperbola's domain (sqrt of a negative number).
+        x_decay = min(x - self.warmup_epochs, self.decay_iter)
         N = self.decay_iter
         U = self.upper_bound
         return self.init_lr + self.delta_lr * (
@@ -98,7 +100,9 @@ class ExpHyperbolicLR:
         if x <= self.warmup_epochs and self.warmup_epochs > 0:
             return self.infimum_lr + (self.init_lr - self.infimum_lr) * x / self.warmup_epochs
 
-        x_decay = x - self.warmup_epochs
+        # Clamp so that stepping beyond max_iter holds the final LR instead of
+        # leaving the hyperbola's domain (sqrt of a negative number).
+        x_decay = min(x - self.warmup_epochs, self.decay_iter)
         N = self.decay_iter
         U = self.upper_bound
         return self.init_lr * self.lr_ratio ** (
