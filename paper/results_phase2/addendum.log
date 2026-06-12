@@ -1,0 +1,247 @@
+[08:26:18] /workspace/hyperboliclr/.venv/bin/python phase2_runner.py --task cifar10 --scheduler WH --seed 7 --epochs 50 --out results_phase2/partA --subset-ratio 0.2 --lr 0.003
+Epoch 001	train_loss=1.9678e+00	val_loss=1.7686e+00
+Epoch 011	train_loss=1.1737e+00	val_loss=1.1575e+00
+Epoch 021	train_loss=9.1007e-01	val_loss=1.0351e+00
+Epoch 031	train_loss=7.5473e-01	val_loss=1.0767e+00
+Epoch 041	train_loss=6.1278e-01	val_loss=1.0247e+00
+wrote results_phase2/partA/cifar10_WH_lr0.003_inf1e-06_N50_s7.parquet (50 epochs, final val_loss 1.0626e+00)
+[08:27:25] /workspace/hyperboliclr/.venv/bin/python phase2_runner.py --task cifar10 --scheduler WH --seed 42 --epochs 50 --out results_phase2/partA --subset-ratio 0.2 --lr 0.003
+Epoch 001	train_loss=2.0249e+00	val_loss=1.6795e+00
+Epoch 011	train_loss=1.2402e+00	val_loss=1.2189e+00
+Epoch 021	train_loss=1.0430e+00	val_loss=1.1789e+00
+Epoch 031	train_loss=8.8845e-01	val_loss=1.0137e+00
+Epoch 041	train_loss=7.7008e-01	val_loss=9.9460e-01
+wrote results_phase2/partA/cifar10_WH_lr0.003_inf1e-06_N50_s42.parquet (50 epochs, final val_loss 1.0465e+00)
+[08:28:33] /workspace/hyperboliclr/.venv/bin/python phase2_runner.py --task cifar10 --scheduler WH --seed 1024 --epochs 50 --out results_phase2/partA --subset-ratio 0.2 --lr 0.003
+Epoch 001	train_loss=2.0140e+00	val_loss=1.7690e+00
+Epoch 011	train_loss=1.2216e+00	val_loss=1.2828e+00
+Epoch 021	train_loss=1.0215e+00	val_loss=1.1737e+00
+Epoch 031	train_loss=8.6127e-01	val_loss=1.1156e+00
+Epoch 041	train_loss=7.7068e-01	val_loss=1.0514e+00
+wrote results_phase2/partA/cifar10_WH_lr0.003_inf1e-06_N50_s1024.parquet (50 epochs, final val_loss 1.0697e+00)
+[08:29:40] /workspace/hyperboliclr/.venv/bin/python phase2_runner.py --task cifar10 --scheduler WH --seed 7 --epochs 100 --out results_phase2/partA --subset-ratio 0.2 --lr 0.003
+Epoch 001	train_loss=1.9678e+00	val_loss=1.7686e+00
+Epoch 011	train_loss=1.2678e+00	val_loss=1.3755e+00
+Epoch 021	train_loss=9.6341e-01	val_loss=1.1207e+00
+Epoch 031	train_loss=8.2421e-01	val_loss=1.0008e+00
+Epoch 041	train_loss=6.8783e-01	val_loss=1.0871e+00
+Epoch 051	train_loss=5.9399e-01	val_loss=1.0211e+00
+Epoch 061	train_loss=5.3280e-01	val_loss=1.1099e+00
+Epoch 071	train_loss=4.7207e-01	val_loss=1.1347e+00
+Epoch 081	train_loss=3.9685e-01	val_loss=1.1943e+00
+Epoch 091	train_loss=3.1626e-01	val_loss=1.2791e+00
+wrote results_phase2/partA/cifar10_WH_lr0.003_inf1e-06_N100_s7.parquet (100 epochs, final val_loss 1.3694e+00)
+[08:31:51] /workspace/hyperboliclr/.venv/bin/python phase2_runner.py --task cifar10 --scheduler WH --seed 42 --epochs 100 --out results_phase2/partA --subset-ratio 0.2 --lr 0.003
+Epoch 001	train_loss=2.0249e+00	val_loss=1.6795e+00
+Epoch 011	train_loss=1.3216e+00	val_loss=1.2475e+00
+Epoch 021	train_loss=1.0755e+00	val_loss=1.1784e+00
+Epoch 031	train_loss=9.1961e-01	val_loss=1.0634e+00
+Epoch 041	train_loss=7.8694e-01	val_loss=1.0601e+00
+Epoch 051	train_loss=7.0854e-01	val_loss=1.0867e+00
+Epoch 061	train_loss=6.5281e-01	val_loss=1.0509e+00
+Epoch 071	train_loss=5.5762e-01	val_loss=1.1219e+00
+Epoch 081	train_loss=4.9068e-01	val_loss=1.1783e+00
+Epoch 091	train_loss=4.4428e-01	val_loss=1.1930e+00
+wrote results_phase2/partA/cifar10_WH_lr0.003_inf1e-06_N100_s42.parquet (100 epochs, final val_loss 1.2487e+00)
+[08:34:02] /workspace/hyperboliclr/.venv/bin/python phase2_runner.py --task cifar10 --scheduler WH --seed 1024 --epochs 100 --out results_phase2/partA --subset-ratio 0.2 --lr 0.003
+Epoch 001	train_loss=2.0140e+00	val_loss=1.7690e+00
+Epoch 011	train_loss=1.2831e+00	val_loss=1.3937e+00
+Epoch 021	train_loss=1.0348e+00	val_loss=1.1867e+00
+Epoch 031	train_loss=8.8626e-01	val_loss=1.1170e+00
+Epoch 041	train_loss=7.8315e-01	val_loss=1.0593e+00
+Epoch 051	train_loss=6.7748e-01	val_loss=1.1793e+00
+Epoch 061	train_loss=5.9747e-01	val_loss=1.0903e+00
+Epoch 071	train_loss=5.2936e-01	val_loss=1.1273e+00
+Epoch 081	train_loss=4.6738e-01	val_loss=1.1921e+00
+Epoch 091	train_loss=4.1222e-01	val_loss=1.2560e+00
+wrote results_phase2/partA/cifar10_WH_lr0.003_inf1e-06_N100_s1024.parquet (100 epochs, final val_loss 1.2588e+00)
+[08:36:12] /workspace/hyperboliclr/.venv/bin/python phase2_runner.py --task cifar10 --scheduler WH --seed 7 --epochs 200 --out results_phase2/partA --subset-ratio 0.2 --lr 0.003
+Epoch 001	train_loss=1.9678e+00	val_loss=1.7686e+00
+Epoch 011	train_loss=1.2715e+00	val_loss=1.1984e+00
+Epoch 021	train_loss=1.0594e+00	val_loss=1.0769e+00
+Epoch 031	train_loss=8.6236e-01	val_loss=1.0669e+00
+Epoch 041	train_loss=7.2707e-01	val_loss=1.0174e+00
+Epoch 051	train_loss=6.2326e-01	val_loss=1.1089e+00
+Epoch 061	train_loss=5.5712e-01	val_loss=1.1108e+00
+Epoch 071	train_loss=4.8262e-01	val_loss=1.2166e+00
+Epoch 081	train_loss=4.2828e-01	val_loss=1.2138e+00
+Epoch 091	train_loss=3.9330e-01	val_loss=1.3070e+00
+Epoch 101	train_loss=3.4029e-01	val_loss=1.4492e+00
+Epoch 111	train_loss=3.2157e-01	val_loss=1.4859e+00
+Epoch 121	train_loss=2.5642e-01	val_loss=1.5342e+00
+Epoch 131	train_loss=2.5194e-01	val_loss=1.5650e+00
+Epoch 141	train_loss=2.0442e-01	val_loss=1.5764e+00
+Epoch 151	train_loss=2.1517e-01	val_loss=1.7154e+00
+Epoch 161	train_loss=1.6396e-01	val_loss=1.7559e+00
+Epoch 171	train_loss=1.2817e-01	val_loss=1.8517e+00
+Epoch 181	train_loss=1.2322e-01	val_loss=1.8353e+00
+Epoch 191	train_loss=9.3479e-02	val_loss=1.8977e+00
+wrote results_phase2/partA/cifar10_WH_lr0.003_inf1e-06_N200_s7.parquet (200 epochs, final val_loss 1.9376e+00)
+[08:40:30] /workspace/hyperboliclr/.venv/bin/python phase2_runner.py --task cifar10 --scheduler WH --seed 42 --epochs 200 --out results_phase2/partA --subset-ratio 0.2 --lr 0.003
+Epoch 001	train_loss=2.0249e+00	val_loss=1.6795e+00
+Epoch 011	train_loss=1.3351e+00	val_loss=1.2366e+00
+Epoch 021	train_loss=1.1361e+00	val_loss=1.1613e+00
+Epoch 031	train_loss=9.6046e-01	val_loss=1.0375e+00
+Epoch 041	train_loss=8.2882e-01	val_loss=1.1795e+00
+Epoch 051	train_loss=7.6598e-01	val_loss=1.1094e+00
+Epoch 061	train_loss=6.9612e-01	val_loss=1.1053e+00
+Epoch 071	train_loss=5.9946e-01	val_loss=1.2329e+00
+Epoch 081	train_loss=5.5211e-01	val_loss=1.2047e+00
+Epoch 091	train_loss=5.5587e-01	val_loss=1.1649e+00
+Epoch 101	train_loss=4.5211e-01	val_loss=1.3121e+00
+Epoch 111	train_loss=4.0055e-01	val_loss=1.3499e+00
+Epoch 121	train_loss=3.8141e-01	val_loss=1.3493e+00
+Epoch 131	train_loss=3.2258e-01	val_loss=1.4179e+00
+Epoch 141	train_loss=3.0782e-01	val_loss=1.4855e+00
+Epoch 151	train_loss=2.7239e-01	val_loss=1.4465e+00
+Epoch 161	train_loss=2.4154e-01	val_loss=1.6066e+00
+Epoch 171	train_loss=2.0580e-01	val_loss=1.6183e+00
+Epoch 181	train_loss=1.8054e-01	val_loss=1.6743e+00
+Epoch 191	train_loss=1.5741e-01	val_loss=1.7343e+00
+wrote results_phase2/partA/cifar10_WH_lr0.003_inf1e-06_N200_s42.parquet (200 epochs, final val_loss 1.7378e+00)
+[08:44:48] /workspace/hyperboliclr/.venv/bin/python phase2_runner.py --task cifar10 --scheduler WH --seed 1024 --epochs 200 --out results_phase2/partA --subset-ratio 0.2 --lr 0.003
+Epoch 001	train_loss=2.0140e+00	val_loss=1.7690e+00
+Epoch 011	train_loss=1.2973e+00	val_loss=1.3470e+00
+Epoch 021	train_loss=1.1238e+00	val_loss=1.2055e+00
+Epoch 031	train_loss=9.5985e-01	val_loss=1.1048e+00
+Epoch 041	train_loss=8.2847e-01	val_loss=1.0360e+00
+Epoch 051	train_loss=7.4024e-01	val_loss=1.0936e+00
+Epoch 061	train_loss=6.6685e-01	val_loss=1.1477e+00
+Epoch 071	train_loss=5.9842e-01	val_loss=1.1299e+00
+Epoch 081	train_loss=5.4846e-01	val_loss=1.2056e+00
+Epoch 091	train_loss=4.7331e-01	val_loss=1.1626e+00
+Epoch 101	train_loss=4.3936e-01	val_loss=1.3135e+00
+Epoch 111	train_loss=3.8785e-01	val_loss=1.2788e+00
+Epoch 121	train_loss=3.7255e-01	val_loss=1.2643e+00
+Epoch 131	train_loss=3.3433e-01	val_loss=1.4011e+00
+Epoch 141	train_loss=3.1862e-01	val_loss=1.4458e+00
+Epoch 151	train_loss=2.8649e-01	val_loss=1.5240e+00
+Epoch 161	train_loss=2.3505e-01	val_loss=1.4966e+00
+Epoch 171	train_loss=2.1487e-01	val_loss=1.5494e+00
+Epoch 181	train_loss=1.8667e-01	val_loss=1.5699e+00
+Epoch 191	train_loss=1.4487e-01	val_loss=1.6680e+00
+wrote results_phase2/partA/cifar10_WH_lr0.003_inf1e-06_N200_s1024.parquet (200 epochs, final val_loss 1.6764e+00)
+[08:49:06] /workspace/hyperboliclr/.venv/bin/python phase2_runner.py --task cifar10 --scheduler WEH --seed 7 --epochs 50 --out results_phase2/partA --subset-ratio 0.2 --lr 0.003
+Epoch 001	train_loss=1.9678e+00	val_loss=1.7686e+00
+Epoch 011	train_loss=1.1464e+00	val_loss=1.1202e+00
+Epoch 021	train_loss=8.2314e-01	val_loss=9.7483e-01
+Epoch 031	train_loss=6.3491e-01	val_loss=9.2928e-01
+Epoch 041	train_loss=5.2324e-01	val_loss=9.3412e-01
+wrote results_phase2/partA/cifar10_WEH_lr0.003_inf1e-06_N50_s7.parquet (50 epochs, final val_loss 9.2403e-01)
+[08:50:13] /workspace/hyperboliclr/.venv/bin/python phase2_runner.py --task cifar10 --scheduler WEH --seed 42 --epochs 50 --out results_phase2/partA --subset-ratio 0.2 --lr 0.003
+Epoch 001	train_loss=2.0249e+00	val_loss=1.6795e+00
+Epoch 011	train_loss=1.2273e+00	val_loss=1.1717e+00
+Epoch 021	train_loss=9.6167e-01	val_loss=1.0678e+00
+Epoch 031	train_loss=7.9446e-01	val_loss=9.8815e-01
+Epoch 041	train_loss=6.8261e-01	val_loss=9.7195e-01
+wrote results_phase2/partA/cifar10_WEH_lr0.003_inf1e-06_N50_s42.parquet (50 epochs, final val_loss 9.8333e-01)
+[08:51:21] /workspace/hyperboliclr/.venv/bin/python phase2_runner.py --task cifar10 --scheduler WEH --seed 1024 --epochs 50 --out results_phase2/partA --subset-ratio 0.2 --lr 0.003
+Epoch 001	train_loss=2.0140e+00	val_loss=1.7690e+00
+Epoch 011	train_loss=1.1868e+00	val_loss=1.2676e+00
+Epoch 021	train_loss=9.2298e-01	val_loss=1.0618e+00
+Epoch 031	train_loss=7.5964e-01	val_loss=1.0553e+00
+Epoch 041	train_loss=6.6604e-01	val_loss=1.0285e+00
+wrote results_phase2/partA/cifar10_WEH_lr0.003_inf1e-06_N50_s1024.parquet (50 epochs, final val_loss 1.0178e+00)
+[08:52:29] /workspace/hyperboliclr/.venv/bin/python phase2_runner.py --task cifar10 --scheduler WEH --seed 7 --epochs 100 --out results_phase2/partA --subset-ratio 0.2 --lr 0.003
+Epoch 001	train_loss=1.9678e+00	val_loss=1.7686e+00
+Epoch 011	train_loss=1.2678e+00	val_loss=1.3755e+00
+Epoch 021	train_loss=8.9800e-01	val_loss=1.0237e+00
+Epoch 031	train_loss=6.8848e-01	val_loss=9.7417e-01
+Epoch 041	train_loss=5.4596e-01	val_loss=9.4657e-01
+Epoch 051	train_loss=4.4313e-01	val_loss=9.8607e-01
+Epoch 061	train_loss=3.8309e-01	val_loss=1.0293e+00
+Epoch 071	train_loss=3.4890e-01	val_loss=1.0644e+00
+Epoch 081	train_loss=3.1889e-01	val_loss=1.0754e+00
+Epoch 091	train_loss=3.1605e-01	val_loss=1.0826e+00
+wrote results_phase2/partA/cifar10_WEH_lr0.003_inf1e-06_N100_s7.parquet (100 epochs, final val_loss 1.0888e+00)
+[08:54:39] /workspace/hyperboliclr/.venv/bin/python phase2_runner.py --task cifar10 --scheduler WEH --seed 42 --epochs 100 --out results_phase2/partA --subset-ratio 0.2 --lr 0.003
+Epoch 001	train_loss=2.0249e+00	val_loss=1.6795e+00
+Epoch 011	train_loss=1.3216e+00	val_loss=1.2475e+00
+Epoch 021	train_loss=1.0210e+00	val_loss=1.2209e+00
+Epoch 031	train_loss=8.3484e-01	val_loss=1.0249e+00
+Epoch 041	train_loss=6.8650e-01	val_loss=1.0363e+00
+Epoch 051	train_loss=5.8999e-01	val_loss=1.0496e+00
+Epoch 061	train_loss=5.3134e-01	val_loss=1.0582e+00
+Epoch 071	train_loss=4.7933e-01	val_loss=1.0830e+00
+Epoch 081	train_loss=4.6727e-01	val_loss=1.0788e+00
+Epoch 091	train_loss=4.6273e-01	val_loss=1.0951e+00
+wrote results_phase2/partA/cifar10_WEH_lr0.003_inf1e-06_N100_s42.parquet (100 epochs, final val_loss 1.0945e+00)
+[08:56:50] /workspace/hyperboliclr/.venv/bin/python phase2_runner.py --task cifar10 --scheduler WEH --seed 1024 --epochs 100 --out results_phase2/partA --subset-ratio 0.2 --lr 0.003
+Epoch 001	train_loss=2.0140e+00	val_loss=1.7690e+00
+Epoch 011	train_loss=1.2831e+00	val_loss=1.3937e+00
+Epoch 021	train_loss=9.8346e-01	val_loss=1.0977e+00
+Epoch 031	train_loss=7.9433e-01	val_loss=1.0686e+00
+Epoch 041	train_loss=6.6186e-01	val_loss=1.0782e+00
+Epoch 051	train_loss=5.5967e-01	val_loss=1.0912e+00
+Epoch 061	train_loss=4.9092e-01	val_loss=1.0842e+00
+Epoch 071	train_loss=4.5566e-01	val_loss=1.1190e+00
+Epoch 081	train_loss=4.2239e-01	val_loss=1.1279e+00
+Epoch 091	train_loss=4.1932e-01	val_loss=1.1407e+00
+wrote results_phase2/partA/cifar10_WEH_lr0.003_inf1e-06_N100_s1024.parquet (100 epochs, final val_loss 1.1448e+00)
+[08:59:01] /workspace/hyperboliclr/.venv/bin/python phase2_runner.py --task cifar10 --scheduler WEH --seed 7 --epochs 200 --out results_phase2/partA --subset-ratio 0.2 --lr 0.003
+Epoch 001	train_loss=1.9678e+00	val_loss=1.7686e+00
+Epoch 011	train_loss=1.2715e+00	val_loss=1.1984e+00
+Epoch 021	train_loss=1.0594e+00	val_loss=1.0769e+00
+Epoch 031	train_loss=8.0471e-01	val_loss=9.8373e-01
+Epoch 041	train_loss=6.1107e-01	val_loss=9.6730e-01
+Epoch 051	train_loss=4.7747e-01	val_loss=1.0221e+00
+Epoch 061	train_loss=3.7187e-01	val_loss=1.1185e+00
+Epoch 071	train_loss=3.1091e-01	val_loss=1.2244e+00
+Epoch 081	train_loss=2.6731e-01	val_loss=1.2522e+00
+Epoch 091	train_loss=2.2264e-01	val_loss=1.3047e+00
+Epoch 101	train_loss=1.9667e-01	val_loss=1.3601e+00
+Epoch 111	train_loss=1.9095e-01	val_loss=1.3604e+00
+Epoch 121	train_loss=1.7873e-01	val_loss=1.3900e+00
+Epoch 131	train_loss=1.6795e-01	val_loss=1.4022e+00
+Epoch 141	train_loss=1.6266e-01	val_loss=1.4203e+00
+Epoch 151	train_loss=1.5636e-01	val_loss=1.4256e+00
+Epoch 161	train_loss=1.5903e-01	val_loss=1.4349e+00
+Epoch 171	train_loss=1.4454e-01	val_loss=1.4372e+00
+Epoch 181	train_loss=1.4635e-01	val_loss=1.4423e+00
+Epoch 191	train_loss=1.5261e-01	val_loss=1.4433e+00
+wrote results_phase2/partA/cifar10_WEH_lr0.003_inf1e-06_N200_s7.parquet (200 epochs, final val_loss 1.4462e+00)
+[09:03:19] /workspace/hyperboliclr/.venv/bin/python phase2_runner.py --task cifar10 --scheduler WEH --seed 42 --epochs 200 --out results_phase2/partA --subset-ratio 0.2 --lr 0.003
+Epoch 001	train_loss=2.0249e+00	val_loss=1.6795e+00
+Epoch 011	train_loss=1.3351e+00	val_loss=1.2366e+00
+Epoch 021	train_loss=1.1361e+00	val_loss=1.1613e+00
+Epoch 031	train_loss=9.0442e-01	val_loss=1.0311e+00
+Epoch 041	train_loss=7.3007e-01	val_loss=1.0437e+00
+Epoch 051	train_loss=6.0499e-01	val_loss=1.0810e+00
+Epoch 061	train_loss=5.2694e-01	val_loss=1.0643e+00
+Epoch 071	train_loss=4.4766e-01	val_loss=1.1257e+00
+Epoch 081	train_loss=4.0230e-01	val_loss=1.1568e+00
+Epoch 091	train_loss=3.7086e-01	val_loss=1.1994e+00
+Epoch 101	train_loss=3.3276e-01	val_loss=1.2065e+00
+Epoch 111	train_loss=3.1245e-01	val_loss=1.2197e+00
+Epoch 121	train_loss=2.9444e-01	val_loss=1.2240e+00
+Epoch 131	train_loss=2.9950e-01	val_loss=1.2570e+00
+Epoch 141	train_loss=2.8149e-01	val_loss=1.2539e+00
+Epoch 151	train_loss=2.8496e-01	val_loss=1.2561e+00
+Epoch 161	train_loss=2.7427e-01	val_loss=1.2572e+00
+Epoch 171	train_loss=2.7740e-01	val_loss=1.2649e+00
+Epoch 181	train_loss=2.7437e-01	val_loss=1.2723e+00
+Epoch 191	train_loss=2.7046e-01	val_loss=1.2732e+00
+wrote results_phase2/partA/cifar10_WEH_lr0.003_inf1e-06_N200_s42.parquet (200 epochs, final val_loss 1.2719e+00)
+[09:07:36] /workspace/hyperboliclr/.venv/bin/python phase2_runner.py --task cifar10 --scheduler WEH --seed 1024 --epochs 200 --out results_phase2/partA --subset-ratio 0.2 --lr 0.003
+Epoch 001	train_loss=2.0140e+00	val_loss=1.7690e+00
+Epoch 011	train_loss=1.2973e+00	val_loss=1.3470e+00
+Epoch 021	train_loss=1.1238e+00	val_loss=1.2055e+00
+Epoch 031	train_loss=9.0272e-01	val_loss=1.0821e+00
+Epoch 041	train_loss=7.5479e-01	val_loss=1.1028e+00
+Epoch 051	train_loss=6.0954e-01	val_loss=1.0618e+00
+Epoch 061	train_loss=5.0953e-01	val_loss=1.0504e+00
+Epoch 071	train_loss=4.4426e-01	val_loss=1.1115e+00
+Epoch 081	train_loss=3.9116e-01	val_loss=1.1374e+00
+Epoch 091	train_loss=3.5096e-01	val_loss=1.1667e+00
+Epoch 101	train_loss=3.3037e-01	val_loss=1.2084e+00
+Epoch 111	train_loss=3.0087e-01	val_loss=1.2230e+00
+Epoch 121	train_loss=2.9480e-01	val_loss=1.2482e+00
+Epoch 131	train_loss=2.7945e-01	val_loss=1.2543e+00
+Epoch 141	train_loss=2.8746e-01	val_loss=1.2636e+00
+Epoch 151	train_loss=2.6635e-01	val_loss=1.2650e+00
+Epoch 161	train_loss=2.6931e-01	val_loss=1.2798e+00
+Epoch 171	train_loss=2.6076e-01	val_loss=1.2808e+00
+Epoch 181	train_loss=2.7017e-01	val_loss=1.2852e+00
+Epoch 191	train_loss=2.6959e-01	val_loss=1.2805e+00
+wrote results_phase2/partA/cifar10_WEH_lr0.003_inf1e-06_N200_s1024.parquet (200 epochs, final val_loss 1.2825e+00)
+addendum complete

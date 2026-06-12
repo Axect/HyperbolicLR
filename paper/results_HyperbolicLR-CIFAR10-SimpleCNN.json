@@ -1,0 +1,60 @@
+{
+  "config": {
+    "model": "SimpleCNN",
+    "lr": 0.01,
+    "batch_size": 128,
+    "epochs": 2,
+    "infimum_lr": 1e-06,
+    "subset_ratio": 1.0,
+    "dataset": "CIFAR10",
+    "num_classes": 10,
+    "project": "HyperbolicLR-CIFAR10-SimpleCNN"
+  },
+  "optimization": {
+    "WSD": {
+      "best_val_loss": 1.245928566667098,
+      "best_params": {
+        "lr": 0.0010253509690168502,
+        "infimum_lr": 7.114476009343419e-05,
+        "cooldown_frac": 0.31959818254342154
+      }
+    },
+    "Prodigy": {
+      "best_val_loss": 1.2174146507359758,
+      "best_params": {
+        "d_coef": 0.5611516415334505
+      }
+    },
+    "DAdapt": {
+      "best_val_loss": 1.2689809391770182,
+      "best_params": {
+        "growth_rate": 1.951207163345817
+      }
+    },
+    "ScheduleFree": {
+      "best_val_loss": 1.0920363521274132,
+      "best_params": {
+        "lr": 0.0029106359131330704,
+        "warmup_steps": 299
+      }
+    }
+  },
+  "comparison": {
+    "WSD": {
+      "2": 1.245928566667098,
+      "4": 1.1119084946716888
+    },
+    "Prodigy": {
+      "2": 1.2174146507359758,
+      "4": 1.053756275508977
+    },
+    "DAdapt": {
+      "2": 1.2689809391770182,
+      "4": 1.1266386403313167
+    },
+    "ScheduleFree": {
+      "2": 1.0920363521274132,
+      "4": 0.9708008419109296
+    }
+  }
+}
