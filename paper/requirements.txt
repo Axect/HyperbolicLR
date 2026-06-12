@@ -119,6 +119,8 @@ platformdirs==4.5.1
 polars==1.38.0
 prodigyopt
     # LR-free optimizer (Prodigy)
+schedulefree
+    # LR-free optimizer (Schedule-Free AdamW)
 polars-runtime-32==1.38.0
     # via polars
 protobuf==6.33.5

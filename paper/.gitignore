@@ -2,6 +2,7 @@ target/
 wandb/
 __pycache__/
 data/cifar-10-batches-py/
+data/cifar-100-python/
 data/*.parquet
 
 hyperbolic_lr.py

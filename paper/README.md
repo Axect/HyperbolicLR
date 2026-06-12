@@ -36,6 +36,7 @@ Supported schedulers:
 | `WH` | Warmup + HyperbolicLR | Hyperbolic + Warmup |
 | `WEH` | Warmup + ExpHyperbolicLR | Hyperbolic + Warmup |
 | `WC` | Warmup + CosineAnnealingLR | Traditional + Warmup |
+| `WSD` | Warmup-Stable-Decay | Traditional + Warmup |
 
 LR-free optimizers (Compare mode):
 
@@ -43,6 +44,7 @@ LR-free optimizers (Compare mode):
 |------|-----------|----------------|
 | `Prodigy` | Prodigy | 1.0 |
 | `DAdapt` | DAdaptAdam | 1.0 |
+| `ScheduleFree` | AdamWScheduleFree | 1e-3 |
 
 ### `main_cifar10.py`
 
@@ -117,7 +119,7 @@ uv venv
 uv pip sync requirements.txt
 
 # Install LR-free optimizer dependencies
-uv pip install prodigyopt dadaptation
+uv pip install prodigyopt dadaptation schedulefree
 
 # Activate
 source .venv/bin/activate
@@ -226,7 +228,7 @@ uv run python main_cifar10.py --project HyperbolicLR-CIFAR10-ResNet
 
 ```sh
 uv run python main_cifar10.py --project HyperbolicLR-CIFAR10-ResNet
-# Select: Compare mode → runs 2 optimizers × 13 schedulers + 2 LR-free = 28 runs
+# Select: Compare mode → runs 2 optimizers × 14 schedulers + 3 LR-free = 31 runs
 ```
 
 ### Full Experiment Matrix
@@ -255,7 +257,7 @@ To reproduce all paper results, run for each combination:
 
 - **OneCycleLR (`OC`) / CyclicLR (`CY`)**: These schedulers step per-batch, not per-epoch. The `step_per_batch` flag is automatically set via `is_step_per_batch()` in `scheduler_config.py`.
 - **Warmup variants (`WH`, `WEH`, `WC`)**: Warmup duration defaults to `epochs // 10`. Particularly important for ResNetCIFAR (BatchNorm) and SimpleViT (Transformer).
-- **LR-free optimizers**: Prodigy and DAdaptAdam use `lr=1.0` and self-tune internally. They run without a scheduler (`N`).
+- **LR-free optimizers**: Prodigy and DAdaptAdam use `lr=1.0` and self-tune internally. ScheduleFree AdamW uses `lr=1e-3` and requires calling `optimizer.train()` / `optimizer.eval()` at the start of each training and evaluation pass. All three run without a scheduler (`N`).
 
 ## Analysis
 
@@ -317,6 +319,7 @@ uv run python scripts/04_cumulative_lr_budget.py
 - **OC** (OneCycleLR): Super-convergence schedule (per-batch stepping)
 - **CY** (CyclicLR): Triangular cyclic schedule (per-batch stepping)
 - **WC** (Warmup + Cosine): `SequentialLR(LinearLR → CosineAnnealingLR)`
+- **WSD** (Warmup-Stable-Decay): linear warmup, constant stable phase, then 1-sqrt decay to `infimum_lr` over the final `cooldown_frac` of training
 
 ### Hyperbolic Schedulers (Ours)
 - **H** (HyperbolicLR): Hyperbolic decay with epoch-insensitive property
@@ -327,6 +330,7 @@ uv run python scripts/04_cumulative_lr_budget.py
 ### LR-Free Optimizers
 - **Prodigy**: Prodigy optimizer (self-tuning learning rate)
 - **DAdapt**: D-Adaptation Adam (learning-rate-free Adam)
+- **ScheduleFree**: Schedule-Free AdamW; requires no LR schedule, uses `warmup_steps` for internal warmup and a recommended `lr=1e-3`
 
 ## Additional Scripts
 

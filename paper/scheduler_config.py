@@ -20,6 +20,7 @@ def get_schedulers():
         "WH": HyperbolicLR,
         "WEH": ExpHyperbolicLR,
         "WC": "_factory",  # handled by create_scheduler
+        "WSD": "_factory",  # handled by create_scheduler
     }
 
 
@@ -48,6 +49,11 @@ def create_scheduler(scheduler_name, optimizer, lr, infimum_lr, epochs,
     if scheduler_name == "WC":
         return _create_warmup_cosine(optimizer, lr, infimum_lr, epochs)
 
+    if scheduler_name == "WSD":
+        cooldown_frac = extra_params.get("cooldown_frac", 0.2)
+        return _create_wsd(optimizer, lr, infimum_lr, epochs,
+                           cooldown_frac=cooldown_frac)
+
     cls = get_schedulers()[scheduler_name]
     return cls(optimizer, **params)
 
@@ -63,6 +69,36 @@ def _create_warmup_cosine(optimizer, lr, infimum_lr, epochs):
     return lr_scheduler.SequentialLR(
         optimizer, [warmup, cosine], milestones=[warmup_epochs]
     )
+
+
+def _create_wsd(optimizer, lr, infimum_lr, epochs, cooldown_frac=0.2):
+    warmup_epochs = max(1, epochs // 10)
+    cooldown_epochs = max(1, int(epochs * cooldown_frac))
+    # Guard: warmup + cooldown must not exceed epochs
+    if warmup_epochs + cooldown_epochs > epochs:
+        cooldown_epochs = max(0, epochs - warmup_epochs)
+    if warmup_epochs > epochs:
+        warmup_epochs = epochs
+    min_factor = max(infimum_lr / lr if lr > 0 else 1e-6, 1e-6)
+    cooldown_start = epochs - cooldown_epochs
+
+    def wsd_lambda(t):
+        if t < warmup_epochs:
+            # linear warmup: start at 0.01, reach 1.0 at warmup_epochs
+            if warmup_epochs <= 1:
+                progress = 1.0
+            else:
+                progress = t / (warmup_epochs - 1) if warmup_epochs > 1 else 1.0
+            factor = 0.01 + 0.99 * progress
+        elif t < cooldown_start or cooldown_epochs == 0:
+            factor = 1.0
+        else:
+            progress = (t - cooldown_start) / cooldown_epochs
+            progress = min(max(progress, 0.0), 1.0)
+            factor = min_factor + (1.0 - min_factor) * (1.0 - progress ** 0.5)
+        return max(factor, 1e-9)
+
+    return lr_scheduler.LambdaLR(optimizer, lr_lambda=wsd_lambda)
 
 
 # ── Default Scheduler Parameters ─────────────────────────────────────────────
@@ -119,6 +155,7 @@ def get_scheduler_params(name, lr, infimum_lr, epochs, steps_per_epoch=1,
             "warmup_epochs": warmup_epochs,
         },
         "WC": {},  # handled by factory
+        "WSD": {},  # handled by factory
     }
 
     params = p.get(name, {}).copy()
@@ -139,13 +176,17 @@ def get_optuna_search_space(trial, scheduler_name, lr, epochs,
         hparams["power"] = trial.suggest_float("power", 0.5, 3.0)
     elif scheduler_name == "E":
         hparams["gamma"] = trial.suggest_float("gamma", 0.9, 0.99)
-    elif scheduler_name in ("C", "H", "EH", "WH", "WEH", "WC"):
+    elif scheduler_name in ("C", "H", "EH", "WH", "WEH", "WC", "WSD"):
         hparams["infimum_lr"] = trial.suggest_float(
             "infimum_lr", 1e-7, 1e-4, log=True
         )
         if scheduler_name in ("H", "EH", "WH", "WEH"):
             hparams["upper_bound"] = trial.suggest_int(
                 "upper_bound", 200, 400, step=50
+            )
+        if scheduler_name == "WSD":
+            hparams["cooldown_frac"] = trial.suggest_float(
+                "cooldown_frac", 0.1, 0.4
             )
     elif scheduler_name == "L":
         hparams["end_factor"] = trial.suggest_float(
@@ -177,6 +218,8 @@ def build_scheduler_from_trial(scheduler_name, optimizer, trial_params, lr,
         extra["gamma"] = trial_params["gamma"]
     elif scheduler_name in ("C", "WC"):
         pass  # infimum_lr is enough
+    elif scheduler_name == "WSD":
+        extra["cooldown_frac"] = trial_params.get("cooldown_frac", 0.2)
     elif scheduler_name in ("H", "EH", "WH", "WEH"):
         extra["upper_bound"] = trial_params["upper_bound"]
     elif scheduler_name == "L":
@@ -213,6 +256,8 @@ def get_optimize_compare_params(params, scheduler_name, lr, epochs,
         extra["gamma"] = params["gamma"]
     elif scheduler_name in ("C", "WC"):
         pass
+    elif scheduler_name == "WSD":
+        extra["cooldown_frac"] = params.get("cooldown_frac", 0.2)
     elif scheduler_name in ("H", "EH", "WH", "WEH"):
         extra["upper_bound"] = params["upper_bound"]
     elif scheduler_name == "L":
@@ -233,15 +278,31 @@ def get_optimize_compare_params(params, scheduler_name, lr, epochs,
 # ── LR-Free Optimizer Registry ───────────────────────────────────────────────
 
 def get_lr_free_optimizers():
+    opts = {}
     try:
         from prodigyopt import Prodigy
-        from dadaptation import DAdaptAdam
-        return {
-            "Prodigy": Prodigy,
-            "DAdapt": DAdaptAdam,
-        }
+        opts["Prodigy"] = Prodigy
     except ImportError:
-        return {}
+        pass
+    try:
+        from dadaptation import DAdaptAdam
+        opts["DAdapt"] = DAdaptAdam
+    except ImportError:
+        pass
+    try:
+        from schedulefree import AdamWScheduleFree
+        opts["ScheduleFree"] = AdamWScheduleFree
+    except ImportError:
+        pass
+    return opts
+
+
+def get_lr_free_default_lr(optimizer_name):
+    if optimizer_name in ("Prodigy", "DAdapt"):
+        return 1.0
+    if optimizer_name == "ScheduleFree":
+        return 1e-3
+    return 1.0
 
 
 def get_lr_free_optuna_search_space(trial, optimizer_name):
@@ -250,4 +311,7 @@ def get_lr_free_optuna_search_space(trial, optimizer_name):
         hparams["d_coef"] = trial.suggest_float("d_coef", 0.1, 10.0, log=True)
     elif optimizer_name == "DAdapt":
         hparams["growth_rate"] = trial.suggest_float("growth_rate", 1.01, 2.0)
+    elif optimizer_name == "ScheduleFree":
+        hparams["lr"] = trial.suggest_float("lr", 1e-4, 1e-2, log=True)
+        hparams["warmup_steps"] = trial.suggest_int("warmup_steps", 0, 500)
     return hparams

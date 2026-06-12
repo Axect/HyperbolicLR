@@ -28,6 +28,7 @@ import wandb
 from scheduler_config import (
     get_scheduler_names, get_optuna_search_space, get_optimize_compare_params,
     get_lr_free_optimizers, get_lr_free_optuna_search_space,
+    get_lr_free_default_lr,
 )
 
 
@@ -308,7 +309,14 @@ def optimize_lr_free_one(args, run_fn, run_config, hparams, dl_train, dl_val,
         rc = run_config.copy()
         rc["project"] = project_name
         rc["optimizer"] = opt_class
-        rc["optimizer_params"] = {"lr": 1.0, **extra_params}
+        # For ScheduleFree, lr is a tunable hparam; for others use the default
+        default_lr = get_lr_free_default_lr(opt_name)
+        opt_lr = extra_params.pop("lr", default_lr)
+        warmup_steps = extra_params.pop("warmup_steps", None)
+        opt_params = {"lr": opt_lr, **extra_params}
+        if warmup_steps is not None:
+            opt_params["warmup_steps"] = warmup_steps
+        rc["optimizer_params"] = opt_params
         rc["optimizer_name"] = opt_name
         rc["scheduler_name"] = "N"
         rc["scheduler_extra"] = {}
@@ -356,10 +364,12 @@ def compare_one(args, run_fn, run_config, hparams, dl_train, dl_val,
             lr_free_opts = get_lr_free_optimizers()
             rc["optimizer"] = lr_free_opts[optimizer_name]
             rc["optimizer_name"] = optimizer_name
-            rc["optimizer_params"] = {"lr": 1.0}
-            # Restore LR-free extra params
+            default_lr = get_lr_free_default_lr(optimizer_name)
+            opt_params = {"lr": params.get("lr", default_lr)}
             for k, v in params.items():
-                rc["optimizer_params"][k] = v
+                if k != "lr":
+                    opt_params[k] = v
+            rc["optimizer_params"] = opt_params
             rc["scheduler_name"] = "N"
             rc["scheduler_extra"] = {}
             rc["infimum_lr"] = infimum_lr

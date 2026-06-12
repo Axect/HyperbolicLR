@@ -35,7 +35,7 @@ def linear_lr(t, N, end=1e-4):
 def cumulative_budget(f, N, n_points=1000):
     t = np.linspace(0, N, n_points)
     lr_vals = np.array([f(ti, N) for ti in t])
-    return np.trapz(lr_vals, t)
+    return np.trapezoid(lr_vals, t)
 
 
 def normalized_cumulative_curve(f, N, n_points=1000):

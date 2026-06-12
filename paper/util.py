@@ -220,6 +220,7 @@ class Trainer:
         self.criterion = criterion
         self.acc = acc
         self.step_per_batch = step_per_batch
+        self.history = []
 
     def step(self, x):
         pred = self.model(x.to(self.device))
@@ -227,6 +228,8 @@ class Trainer:
 
     def train_epoch(self, dataloader):
         self.model.train()
+        if hasattr(self.optimizer, 'train') and callable(getattr(self.optimizer, 'train')):
+            self.optimizer.train()
         epoch_loss = 0
         for x, y in dataloader:
             self.optimizer.zero_grad()
@@ -242,6 +245,8 @@ class Trainer:
 
     def evaluate(self, dataloader):
         self.model.eval()
+        if hasattr(self.optimizer, 'eval') and callable(getattr(self.optimizer, 'eval')):
+            self.optimizer.eval()
         eval_loss = 0
         correct = 0
         total = 0
@@ -272,21 +277,16 @@ class Trainer:
                 val_loss = self.evaluate(dl_val)
             if self.scheduler is not None and not self.step_per_batch:
                 self.scheduler.step()
+            record = {
+                "train_loss": train_loss,
+                "val_loss": val_loss,
+                "epoch": epoch+1,
+                "lr": self.optimizer.param_groups[0]['lr']
+            }
             if self.acc:
-                wandb.log({
-                    "train_loss": train_loss,
-                    "val_loss": val_loss,
-                    "epoch": epoch+1,
-                    "lr": self.optimizer.param_groups[0]['lr'],
-                    "acc": accuracy
-                })
-            else:
-                wandb.log({
-                    "train_loss": train_loss,
-                    "val_loss": val_loss,
-                    "epoch": epoch+1,
-                    "lr": self.optimizer.param_groups[0]['lr']
-                })
+                record["acc"] = accuracy
+            self.history.append(record)
+            wandb.log(record)
 
             if epoch % 10 == 0:
                 print(f"Epoch {epoch+1:03}\ttrain_loss={train_loss:.4e}\tval_loss={val_loss:.4e}")
@@ -311,6 +311,8 @@ class OperatorTrainer:
 
     def train_epoch(self, dataloader):
         self.model.train()
+        if hasattr(self.optimizer, 'train') and callable(getattr(self.optimizer, 'train')):
+            self.optimizer.train()
         epoch_loss = 0
         for u, y, Guy in dataloader:
             self.optimizer.zero_grad()
@@ -326,6 +328,8 @@ class OperatorTrainer:
 
     def evaluate(self, dataloader):
         self.model.eval()
+        if hasattr(self.optimizer, 'eval') and callable(getattr(self.optimizer, 'eval')):
+            self.optimizer.eval()
         eval_loss = 0
         with torch.no_grad():
             for u, y, Guy in dataloader:
