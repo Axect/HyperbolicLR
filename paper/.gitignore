@@ -5,7 +5,6 @@ data/cifar-10-batches-py/
 data/cifar-100-python/
 data/*.parquet
 
-hyperbolic_lr.py
 *.tar.gz
 results_confirmatory*/
 data_confirmatory*/
