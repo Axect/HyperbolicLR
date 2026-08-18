@@ -21,7 +21,7 @@ import survey
 import argparse
 
 
-def run(run_config, hparams, seeds, dl_train, dl_val, device='cpu'):
+def run(run_config, hparams, seeds, dl_train, dl_val, device='cpu', epoch_callback=None):
     project_name = run_config['project']
     model = run_config['model']
     optimizer = run_config['optimizer']
@@ -79,9 +79,13 @@ def run(run_config, hparams, seeds, dl_train, dl_val, device='cpu'):
             criterion=nn.HuberLoss(), acc=False, device=device,
             step_per_batch=step_per_batch
         )
-        val_loss_ = trainer.train(dl_train, dl_val, epochs)
+        try:
+            val_loss_ = trainer.train(
+                dl_train, dl_val, epochs, epoch_callback=epoch_callback
+            )
+        finally:
+            wandb.finish()
         val_loss += val_loss_
-        wandb.finish()
 
     return val_loss / len(seeds)
 

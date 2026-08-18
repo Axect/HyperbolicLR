@@ -37,6 +37,9 @@ Supported schedulers:
 | `WEH` | Warmup + ExpHyperbolicLR | Hyperbolic + Warmup |
 | `WC` | Warmup + CosineAnnealingLR | Traditional + Warmup |
 | `WSD` | Warmup-Stable-Decay | Traditional + Warmup |
+| `POW` | Power Scheduler | Horizon-free base |
+| `WSQD` | Warmup with square-root base and linear decay | Horizon-free base |
+| `D2Z` | Linear decay to zero | Horizon-rescaled control |
 
 LR-free optimizers (Compare mode):
 
@@ -65,7 +68,7 @@ Oscillation prediction experiments with LSTM Sequence-to-Sequence model.
 
 Integral operator learning experiments.
 
-- Models: `DeepONet`, `TFONet`
+- Models: `DeepONet`, `DeepONetLN`, `TFONet`
 - Run modes: Run, Compare, Optimize, Optimize-Compare
 
 ### `run_all.py`
@@ -228,7 +231,7 @@ uv run python main_cifar10.py --project HyperbolicLR-CIFAR10-ResNet
 
 ```sh
 uv run python main_cifar10.py --project HyperbolicLR-CIFAR10-ResNet
-# Select: Compare mode → runs 2 optimizers × 14 schedulers + 3 LR-free = 31 runs
+# Select: Compare mode → runs 2 optimizers × 17 schedulers + 3 LR-free = 37 runs
 ```
 
 ### Full Experiment Matrix
@@ -359,6 +362,6 @@ Compares cumulative LR budget `integral(eta, 0, N)` across schedulers for differ
 - The `bring.sh` script copies the main `hyperbolic_lr.py` implementation into the experiment directory.
 - Rust components provide efficient data generation, analysis, and metric calculation.
 - All experiments are tracked via W&B. Set `WANDB_MODE=offline` for offline runs.
-- To add a new scheduler, add it only to `scheduler_config.py` — all three `main_*.py` files will pick it up automatically.
+- To add a new scheduler, add it only to `scheduler_config.py`. All three `main_*.py` files will pick it up automatically.
 
 For more detailed information on the HyperbolicLR implementation, refer to the main [README](../README.md) in the root directory.

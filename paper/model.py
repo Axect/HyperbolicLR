@@ -134,11 +134,19 @@ class LSTM_Seq2Seq(nn.Module):
         return pred_output
 
 
-def create_net(sizes):
+def create_net(sizes, norm=False):
+    """MLP of Linear + GELU. `norm=True` inserts LayerNorm before each activation.
+
+    The normalization switch exists for the budget-extrapolation ablation: the unnormalized stack
+    is what makes this architecture's instability boundary reachable, so turning normalization on
+    with everything else fixed is the direct test of that attribution.
+    """
     net = []
     for i in range(len(sizes)-1):
         net.append(nn.Linear(sizes[i], sizes[i+1]))
         if i < len(sizes)-2:
+            if norm:
+                net.append(nn.LayerNorm(sizes[i+1]))
             net.append(nn.GELU())
     return nn.Sequential(*net)
 
@@ -148,30 +156,49 @@ class DeepONet(nn.Module):
         "hidden_size": 1024,
         "num_layers": 6,
         "num_branch": 50,
+        "norm": False,
     }
     def __init__(self, hparams, device="cpu"):
         super().__init__()
 
+        norm = bool(hparams.get("norm", False))
         self.branch_net = create_net(
             [100]
             + [hparams["hidden_size"]]*(hparams["num_layers"]-1)
-            + [hparams["num_branch"]]
+            + [hparams["num_branch"]],
+            norm=norm,
         )
         self.trunk_net = create_net(
             [1]
             + [hparams["hidden_size"]]*(hparams["num_layers"]-1)
-            + [hparams["num_branch"]]
+            + [hparams["num_branch"]],
+            norm=norm,
         )
         self.bias = nn.Parameter(torch.randn(1), requires_grad=True).to(device)
         self.device = device
 
     def forward(self, u, y):
-        window = y.shape[1]
+        # The trunk net is pointwise in y, so all window coordinates go through it in one
+        # batched call instead of `window` separate calls. Same arithmetic, ~100x fewer
+        # kernel launches at window=100.
+        batch, window = y.shape
         branch_out = self.branch_net(u)
-        trunk_out = torch.stack([self.trunk_net(y[:, i:i+1])
-                                for i in range(window)], dim=2)
+        trunk_out = self.trunk_net(y.reshape(-1, 1))
+        trunk_out = trunk_out.reshape(batch, window, -1).transpose(1, 2)
         pred = torch.einsum("bp,bpl->bl", branch_out, trunk_out) + self.bias
         return pred
+
+
+class DeepONetLN(DeepONet):
+    """DeepONet with LayerNorm in both trunk and branch stacks.
+
+    Separate class rather than a flag so that the model name reaches the output filename and the
+    normalized and unnormalized results cannot land on the same path.
+    """
+    default_hparams = dict(DeepONet.default_hparams, norm=True)
+
+    def __init__(self, hparams, device="cpu"):
+        super().__init__(dict(hparams, norm=True), device=device)
 
 
 class PositionalEncoding(nn.Module):

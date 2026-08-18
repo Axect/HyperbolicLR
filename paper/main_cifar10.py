@@ -28,7 +28,7 @@ MODEL_REGISTRY = {
 }
 
 
-def run(run_config, hparams, seeds, dl_train, dl_val, device='cpu'):
+def run(run_config, hparams, seeds, dl_train, dl_val, device='cpu', epoch_callback=None):
     project_name = run_config['project']
     model = run_config['model']
     optimizer = run_config['optimizer']
@@ -81,10 +81,14 @@ def run(run_config, hparams, seeds, dl_train, dl_val, device='cpu'):
             criterion=nn.CrossEntropyLoss(label_smoothing=0.1),
             acc=True, device=device, step_per_batch=step_per_batch
         )
-        val_loss_, accuracy_ = trainer.train(dl_train, dl_val, epochs)
+        try:
+            val_loss_, accuracy_ = trainer.train(
+                dl_train, dl_val, epochs, epoch_callback=epoch_callback
+            )
+        finally:
+            wandb.finish()
         val_loss += val_loss_
         accuracy += accuracy_
-        wandb.finish()
 
     return val_loss / len(seeds), accuracy / len(seeds)
 

@@ -10,6 +10,7 @@ Usage:
   uv run python run_all.py --task osc
   uv run python run_all.py --task integral --model DeepONet
   uv run python run_all.py --task cifar10 --model ResNetCIFAR --n-trials 10 --epochs 100
+  uv run python run_all.py --task cifar10 --pruner median --pruner-warmup-steps 5
 """
 
 import argparse
@@ -86,6 +87,19 @@ def parse_args():
                    help="Skip LR-free optimizers (Prodigy, DAdapt)")
     p.add_argument("--skip-compare", action="store_true",
                    help="Skip Phase 2 (only optimize)")
+
+    # Optuna pruning (low-budget partial-curve HPO)
+    p.add_argument("--pruner", type=str, default="none",
+                   choices=["none", "median"],
+                   help="Optuna pruner used during Phase 1 "
+                        "(none = no trial is ever stopped early)")
+    p.add_argument("--pruner-warmup-steps", type=int, default=5,
+                   help="Epochs of a trial that are exempt from pruning")
+    p.add_argument("--pruner-startup-trials", type=int, default=5,
+                   help="Completed trials required before pruning starts")
+    p.add_argument("--no-intermediate-report", action="store_true",
+                   help="Do not record per-epoch val_loss in the Optuna storage "
+                        "(disables offline kill-rate analysis; pruning needs it)")
 
     # Task-specific overrides
     p.add_argument("--dataset", type=str, default=None,
@@ -239,6 +253,52 @@ def extract_val_loss(task, result):
     return result
 
 
+# ── Pruning ─────────────────────────────────────────────────────────────────
+
+def build_pruner(args):
+    """Build the Optuna pruner selected on the command line.
+
+    Optuna falls back to a MedianPruner when ``create_study`` gets ``pruner=None``, so ``--pruner none`` has to install a NopPruner explicitly. That keeps ``trial.report`` inert and reproduces the pre-pruning behaviour of this script exactly.
+    """
+    if args.pruner == "median":
+        return optuna.pruners.MedianPruner(
+            n_startup_trials=args.pruner_startup_trials,
+            n_warmup_steps=args.pruner_warmup_steps,
+        )
+    return optuna.pruners.NopPruner()
+
+
+def make_epoch_callback(args, trial):
+    """Build the per-epoch hook handed to the trainer for one trial.
+
+    The hook records the validation loss as an Optuna intermediate value and raises ``TrialPruned`` as soon as the pruner rejects the partial curve. Steps are counted globally over the seeds of a trial rather than reset per seed, because Optuna keeps only the first value reported for a given step; a global counter therefore stores every epoch of every seed instead of silently dropping seeds 2..n.
+    """
+    if args.no_intermediate_report:
+        return None
+
+    state = {"step": 0}
+
+    def callback(epoch, val_loss):
+        state["step"] += 1
+        trial.report(float(val_loss), state["step"])
+        if trial.should_prune():
+            raise optuna.TrialPruned(
+                f"pruned at epoch {epoch} (step {state['step']}, "
+                f"val_loss={val_loss:.4e})"
+            )
+
+    return callback
+
+
+def report_study_trials(study):
+    """One-line pruning census for a finished study."""
+    n_pruned = len([t for t in study.trials
+                    if t.state == optuna.trial.TrialState.PRUNED])
+    n_complete = len([t for t in study.trials
+                      if t.state == optuna.trial.TrialState.COMPLETE])
+    return n_complete, n_pruned
+
+
 # ── Phase 1: Optimize ──────────────────────────────────────────────────────
 
 def optimize_one(args, run_fn, run_config, hparams, dl_train, dl_val,
@@ -276,7 +336,8 @@ def optimize_one(args, run_fn, run_config, hparams, dl_train, dl_val,
         }
 
         result = run_fn(rc, h, seeds=opt_seeds, dl_train=dl_train,
-                        dl_val=dl_val, device=device)
+                        dl_val=dl_val, device=device,
+                        epoch_callback=make_epoch_callback(args, trial))
         return extract_val_loss(args.task, result)
 
     study_name = f"{project_name}-{optimizer_name}-{scheduler_name}"
@@ -284,6 +345,7 @@ def optimize_one(args, run_fn, run_config, hparams, dl_train, dl_val,
     study = optuna.create_study(
         direction="minimize",
         sampler=sampler,
+        pruner=build_pruner(args),
         study_name=study_name,
         storage=f"sqlite:///{project_name}.db",
         load_if_exists=True,
@@ -323,7 +385,8 @@ def optimize_lr_free_one(args, run_fn, run_config, hparams, dl_train, dl_val,
         rc["epochs"] = epochs
 
         result = run_fn(rc, h, seeds=opt_seeds, dl_train=dl_train,
-                        dl_val=dl_val, device=device)
+                        dl_val=dl_val, device=device,
+                        epoch_callback=make_epoch_callback(args, trial))
         return extract_val_loss(args.task, result)
 
     study_name = f"{project_name}-{opt_name}-N"
@@ -331,6 +394,7 @@ def optimize_lr_free_one(args, run_fn, run_config, hparams, dl_train, dl_val,
     study = optuna.create_study(
         direction="minimize",
         sampler=sampler,
+        pruner=build_pruner(args),
         study_name=study_name,
         storage=f"sqlite:///{project_name}.db",
         load_if_exists=True,
@@ -505,6 +569,10 @@ def main():
     print(f"  Task: {args.task} | Model: {cfg['model']} | Optimizer: {args.optimizer}")
     print(f"  Epochs: {cfg['epochs']} | Trials: {args.n_trials} | Device: {device}")
     print(f"  Schedulers: {len(scheduler_names)} | LR-free: {len(lr_free_opts)} | Total: {total}")
+    pruner_desc = (f"median(startup={args.pruner_startup_trials}, "
+                   f"warmup={args.pruner_warmup_steps})"
+                   if args.pruner == "median" else "none")
+    print(f"  Pruner: {pruner_desc}")
     print("═" * 58)
 
     # Load data
@@ -528,6 +596,12 @@ def main():
             args, run_fn, run_config, hparams.copy(), dl_train, dl_val,
             args.optimizer, sched_name, device, cfg
         )
+        n_complete, n_pruned = report_study_trials(study)
+        if n_pruned:
+            print(f"       Trials: {n_complete} complete, {n_pruned} pruned")
+        if n_complete == 0:
+            print(f"       All trials pruned; skipping {sched_name}")
+            continue
         best = study.best_trial
         studies[sched_name] = (study, args.optimizer, False)
         optimization_results[sched_name] = {
@@ -545,6 +619,12 @@ def main():
             args, run_fn, run_config, hparams.copy(), dl_train, dl_val,
             opt_name, device, cfg
         )
+        n_complete, n_pruned = report_study_trials(study)
+        if n_pruned:
+            print(f"       Trials: {n_complete} complete, {n_pruned} pruned")
+        if n_complete == 0:
+            print(f"       All trials pruned; skipping {opt_name}")
+            continue
         best = study.best_trial
         studies[opt_name] = (study, opt_name, True)
         optimization_results[opt_name] = {

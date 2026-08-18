@@ -1,10 +1,10 @@
-# 재프레이밍: 스케줄러 설계의 보존 법칙과 트레이드오프 (v2)
+# ExpHyperbolicLR의 cross-budget 설계 이론 (v3)
 
-작성: 2026-06-11 (v1), 같은 날 v2로 전면 개정. 목적: HyperbolicLR 논문을 "새 스케줄 함수" 논문에서 "horizon 불확실성 하의 스케줄 설계에 내재한 정량적 트레이드오프와 보존 법칙을 정식화하고, 그 위에서 HyperbolicLR의 좌표를 폐형식으로 제시하는" 논문으로 재구성한다. 모든 명제는 sympy 또는 numpy로 검증 완료 (검증 항목마다 표기).
+작성: 2026-06-11, v3 전면 재정립 2026-08-18. 목적은 HyperbolicLR과 ExpHyperbolicLR의 수학을 cross-budget HPO transfer라는 실무 문제에 맞춰 정리하는 것이다. 기존의 트레이드오프와 보존 법칙은 schedule coordinate를 제공하지만 논문의 주인공은 아니다. 본문 기여는 log-space hyperbolic 설계와 그 실증이며, stop-time game과 spectral tension은 appendix 또는 별도 이론 작업으로 분리한다.
 
-## 0. 한 문장 주장
+## 0. 중심 주장과 이론의 한계
 
-> 총 budget이 불확실한 상황에서 annealing 스케줄러는 세 가지를 동시에 가질 수 없다: 재현 가능한 초기 궤적 (작은 prefix deviation $D$), 목표 하한 도달 (작은 anchoring error $A$), 연장된 budget의 실질 활용 (큰 tail headroom $H$). 이들은 가정 없는 부등식 $D + A \ge H$로 묶이며, budget 민감도의 총량은 보존 법칙 $\int_0^N \partial_N \eta_N\,dt = B'(N) - \eta_N(N)$을 따른다. 모든 기존 스케줄러는 이 보존된 민감도 질량의 (총량, 배치) 좌표로 분류되고, HyperbolicLR은 가장 작은 총량을 가장 늦게 배치하는 매끄러운 구성이며 그 좌표 전부가 폐형식이다.
+> 작은 budget에서 선택한 learning-rate 설정을 긴 horizon에 그대로 배포하려면 초기 trajectory의 fidelity와 추가 budget의 utility가 모두 필요하다. Hyperbolic geometry는 horizon 변화에 따른 curve deformation을 뒤쪽에 매끄럽게 배치하고, ExpHyperbolicLR는 이 geometry를 log LR에 적용해 multiplicative anchoring을 제공한다. 이 설계가 실제 optimization에서 H, Power Scheduler, WSqD보다 나은지는 정리가 아니라 replicated HPO experiment가 판정한다.
 
 ## 1. 형식 체계
 
@@ -19,6 +19,8 @@
 **정의 4 (Cumulative budget과 민감도 질량).** $B(N) = \int_0^N \eta_N(t)\,dt$ (총 LR 예산). 민감도 질량 $M(N) = \int_0^N \partial_N \eta_N(t)\,dt$ (budget을 한 단위 늘릴 때 LR 곡선이 창 전체에서 움직이는 총량).
 
 **정의 5 (Budget elasticity).** $\mathcal{E}(N) = \partial \log |\dot\eta_N(0)| / \partial \log N$. 초기 감쇠율의 budget 민감도.
+
+**정의 6 (Log-space coordinates).** $\ell_N(t)=\log\eta_N(t)$, $\ell_{\min}=\log\eta_{\min}$로 두고 $D_T^{\log}(N_1,N_2)=\sup_{t\le T}|\ell_{N_1}(t)-\ell_{N_2}(t)|$, $A^{\log}(N)=\ell_N(N)-\ell_{\min}$, $H^{\log}(N_1,N_2)=\ell_{N_2}(N_1)-\ell_{\min}$을 정의한다. Peak LR를 log scale로 탐색하는 HPO에서는 additive LR 차이보다 이 좌표가 직접적이다. $\eta_{\min}=r\eta_0$처럼 relative floor $r$를 고정하면 좌표가 peak LR의 절대 scale에 대해 불변이다.
 
 ## 2. 다리 명제: 스케줄 편차가 학습 곡선 편차를 지배한다
 
@@ -40,7 +42,7 @@ $$\left|\log m^1_{t,i} - \log m^2_{t,i}\right| \;\le\; \frac{2\lambda_i}{1 - \et
 
 ## 3. 정량적 불가능성: 삼각 부등식
 
-**정리 1 (No free lunch).** 임의의 패밀리와 $N_1 < N_2$에 대해, 아무 가정 없이
+**정리 1 (좌표 삼각관계, 원고에서는 보조식).** 임의의 패밀리와 $N_1 < N_2$에 대해, 아무 가정 없이
 
 $$D_{N_1}(N_1, N_2) + A(N_1) \;\ge\; H(N_1, N_2)$$
 
@@ -50,7 +52,7 @@ $$D_{N_1}(N_1, N_2) + A(N_1) \;\ge\; H(N_1, N_2)$$
 
 **따름정리 1.2 (퇴화 모서리).** $D = A = 0$을 고집하면 $H = 0$: 모든 budget이 최소 budget 안에 감쇠를 끝내고 바닥에 눕는 drop-then-floor 패밀리만 남는다. 연장 budget은 전부 $\eta_{\min}$에서 소비된다.
 
-이 부등식이 논문의 중심 결과다. 세 양은 모두 실측 가능하고, 모든 스케줄러는 이 부등식을 어디서 얼마나 (그리고 등호로 포화하는지) 채우는지로 특성화된다.
+이 부등식은 세 설계 욕구를 한 좌표계에 놓는 bookkeeping relation이다. 증명은 삼각 부등식 한 줄이므로 headline theorem으로 쓰지 않는다. 방법의 가치는 EH가 이 좌표에서 어디에 놓이는지와 그 위치가 실제 cross-budget transfer로 이어지는지를 함께 보일 때 생긴다.
 
 ## 4. 보존 법칙: 민감도 질량은 사라지지 않고 배치될 뿐이다
 
@@ -72,21 +74,22 @@ $$M(N) = \int_0^N \partial_N \eta_N(t)\,dt = B'(N) - \eta_N(N)$$
 
 *증명.* (a) 직접 대입. (b) $\eta_{N_2}(N_1) = \eta_0$ (아직 stable). (c) $B(N) = (1-c)N\eta_0 + cN(\eta_{\min} + c_\psi\Delta\eta)$에서 $B'$ 계산, 정리 2 적용. $\square$
 
-**분류 표 (트레이드오프 좌표, 모두 폐형식).**
+**분류 표.** H 행은 LR-space 좌표, EH 행은 같은 식의 log-space 좌표다.
 
-| 패밀리 | $A(N)$ | $D_{N_1}$ (full) | 조기 창 $D$ | $M(N)/\Delta\eta$ | 질량 배치 | $\mathcal{E}(N)$ |
+| 패밀리 | Anchoring | Full-prefix deviation | 조기 deviation | 정규화 sensitivity mass | 배치 | 초기 elasticity |
 |---|---|---|---|---|---|---|
-| rescaling (cos/lin/poly) | $0$ | $\ge \Delta\eta\tilde\varphi(N_1/N_2)$, 비소멸 | $\Theta(\cdot)$, 자기닮음 고정 | $c_\varphi$ (상수, cos/lin은 $\tfrac12$) | 전 구간 분산 | $-1$ |
+| rescaling (cos/lin/poly) | $0$ | budget 비에 따라 비소멸 | 자기닮음 고정 | cos/lin $1/2$ | 전 구간 분산 | $-1$ |
 | truncation (const, exp $\gamma$ 고정) | 통제 불가 | $0$ | $0$ | $0$ | 없음 | $0$ |
-| WSD | $0$ | $\Delta\eta$ (최대) | $0$ (stable 구간) | $1 - c(1-c_\psi)$ (최대급) | 끝 $c$-구간 집중 (bang-bang) | $0$ (stable) |
-| drop-then-floor | $0$ | $0$ | $0$ | $\approx 0$ | 없음 ($H=0$ 퇴화) | $0$ |
-| **HyperbolicLR** | $\Delta\eta(1-\sqrt{1-(1-\rho)^2})$ | 폐형식 (정리 3d) | 최소 (아래 수치) | $0.29\sim0.36$ (최소급 비퇴화) | 매끄러운 후방 배치 (밀도 증가) | $-\frac{U-N}{2U-N}$ |
+| WSD | $0$ | cooldown에서 최대 | stable 구간 $0$ | 최대급 | 끝 구간 집중 | stable 구간 $0$ |
+| drop-then-floor | $0$ | $0$ | $0$ | $\approx0$ | 없음, utility 퇴화 | $0$ |
+| **HyperbolicLR** | $\Delta\eta[1-\sqrt{1-(1-\rho)^2}]$ | 정리 3(d) | 작은 후방 배치 | $0.29\sim0.36$ | 매끄러운 후방 증가 | $-\frac{U-N}{2U-N}$ |
+| **ExpHyperbolicLR** | $\Delta\ell[1-\sqrt{1-(1-\rho)^2}]$ | H와 같은 정규화 식 | log-space 후방 배치 | H와 같은 정규화 식 | 매끄러운 후방 증가 | $-\frac{U-N}{2U-N}$ |
 
-($\rho = N/U$. truncation과 drop-then-floor는 비퇴화 조건을 만족하지 못하는 경계 사례.)
+$\rho=N/U$. Truncation과 drop-then-floor는 utility 또는 anchoring을 포기하는 경계 사례다. 표는 성능 순위를 뜻하지 않는다.
 
-## 5. HyperbolicLR의 폐형식 좌표
+## 5. HyperbolicLR과 ExpHyperbolicLR의 폐형식 좌표
 
-표기: $a = U - N$, $\rho = N/U$, $\eta_N(t) = \eta_0 + \Delta\eta(g_N(t) - g_N(0))$, $g_N(t) = \sqrt{(N-t)(2U-N-t)}/U$.
+표기: $a=U-N$, $\rho=N/U$, $g_N(t)=\sqrt{(N-t)(2U-N-t)}/U$. HyperbolicLR는 $\eta_N(t)=\eta_0+\Delta\eta(g_N(t)-g_N(0))$이고, ExpHyperbolicLR는 $\ell_N(t)=\ell_0+\Delta\ell(g_N(t)-g_N(0))$, $\Delta\ell=\log(\eta_0/\eta_{\min})$로 정의한다. 두 방법은 같은 hyperbolic arc를 공유하지만 H는 additive LR geometry, EH는 multiplicative log-LR geometry를 쓴다.
 
 **보조정리 1 (Master 쌍곡선).** $g_N(t)^2 = \big((U-t)^2 - a^2\big)/U^2$. [sympy] 패밀리는 공통 점근선 $y = (U-t)/U$를 공유하는 쌍곡선 호들이고 $a$가 점근선까지의 거리다. budget 강건성은 rescaling이 아니라 이 점근 구조에서 나온다.
 
@@ -103,7 +106,7 @@ $$M(N) = \int_0^N \partial_N \eta_N(t)\,dt = B'(N) - \eta_N(N)$$
 (e) **삼각 부등식 등호 포화**: $D_{N_1}(N_1,N_2) + A(N_1) = H(N_1,N_2)$. [sympy 검증: 항등식] 즉 full-window 기준 낭비 없는 Pareto-효율 (linear, WSD도 포화; cosine은 mid-window sup 때문에 strict 부등). 효율적 스케줄러 간의 차이는 부등식이 아니라 **배치**에서 갈린다.
 (f) 민감도 밀도 $\partial_N \eta_N(t) = \Delta\eta\,\frac{a}{U}\Big[\frac{1}{\sqrt{(U-t)^2-a^2}} - \frac{1}{\sqrt{U^2-a^2}}\Big] \ge 0$이고 $t$에 대해 단조 증가 (질량의 후방 배치). 총량은 $M(N) = \Delta\eta\,\frac{a}{U}\Big[\ln\frac{U+\sqrt{U^2-a^2}}{a} - \frac{N}{\sqrt{U^2-a^2}}\Big]$이고 $N \to U$에서 $0$. [sympy 부호; 폐형식은 quad 대비 상대오차 $<10^{-5}$로 5개 budget 전수 검증]
 (g) $U$의 보간 역할: $U = N_{\max}$이면 anchoring 우선, $U \to \infty$이면 truncation으로 퇴화. 분류 표의 행들을 단일 knob으로 연속 보간.
-(h) ExpHyperbolicLR은 $\log\eta$ 공간에서 동일 구조 ($\Delta\eta \to \log(\eta_0/\eta_{\min})$). 모든 결과 이식. [수치 검증]
+(h) ExpHyperbolicLR은 $\log\eta$ 공간에서 동일 구조를 가지므로 (a)부터 (g)까지가 $\Delta\eta\to\Delta\ell=\log(\eta_0/\eta_{\min})$로 이식된다. Relative floor를 고정하면 normalized log trajectory가 peak LR와 분리되며, 이것이 H와 EH를 가르는 핵심 설계 가설이다. [수치 검증]
 
 **일반 창 하한 (rescaling과의 분리).** rescaling 패밀리는 $t = \beta N_1$에서 $D_{\beta N_1} \ge \Delta\eta\big[\tilde\varphi(\beta N_1/N_2) - \tilde\varphi(\beta)\big] > 0$이고 이 값은 budget 비에만 의존한다 (절대 규모를 키워도 비소멸). hyperbolic의 동일 창 deviation은 (d)의 폐형식으로 $(1-\rho)$ 차수로 통제된다.
 
@@ -119,7 +122,7 @@ $$M(N) = \int_0^N \partial_N \eta_N(t)\,dt = B'(N) - \eta_N(N)$$
 
 anchoring error: $A(50) = 0.40\Delta\eta$, $A(100) = 0.20\Delta\eta$, $A(150) = 0.084\Delta\eta$, $A(200) = 0.020\Delta\eta$. $N \ll U$의 실질 가격이며 정리 1이 회피 불가능성을 보증한다.
 
-## 7. 정확히 풀리는 동역학: loss 영역에서의 직접 검증 (2026-06-11 추가)
+## 7. Secondary exact dynamics와 stop-time theory (appendix 또는 별도 논문 후보)
 
 LR 곡선의 유사성은 설계의 결과라 그 자체로는 증거가 아니다. epoch insensitivity의 직접 증거는 **loss 궤적이 실제로 비슷하게 가는 것**이고, 명제 1은 그 연결의 정성적 보증일 뿐이다. 실제 딥러닝 실험 (Phase 2) 이전의 중간 층위로, 기대 loss가 정확히 계산되는 landscape에서 이를 보인다.
 
@@ -150,25 +153,25 @@ SLCD (정확 loss 곡선, 낮을수록 epoch-insensitive):
 최종 loss (N=200): **HyperbolicLR 0.2275** < WSD 0.2279 < Linear 0.2429 < Cosine 0.2496 < Constant 0.4483.
 
 **해석.**
-1. noise가 커지면 loss 수준이 순간 LR의 noise floor를 따라가므로, **WSD의 loss 영역 insensitivity가 붕괴한다** ($c=0.05$에서 SLCD 0.004 → $c=0.3$에서 0.022, cosine보다 나빠짐). 그림에서 WSD의 budget별 곡선은 각자의 cooldown 시점에 뿔뿔이 갈라진다. LR 영역에서 prefix-invariant라는 사실이 loss 영역 insensitivity를 보장하지 않는 regime이 존재한다는 것: 이것이 LR 곡선이 아니라 loss 곡선을 봐야 한다는 원칙의 정확한 실례다.
-2. 같은 지점에서 hyperbolic은 SLCD 최저 (자명한 Constant 제외)이면서 최종 loss도 최저다: **noisy regime에서는 insensitivity와 최종 성능이 트레이드오프가 아니라 동시에 달성된다.** 매끄러운 후방 질량 배치가 분산 소산과 prefix 보존을 한꺼번에 해 주기 때문.
-3. Constant는 분류 표의 truncation 모서리를 시각화한다: $D = 0$이지만 noise floor 아래로 내려갈 수 없다 (anchoring 실패가 loss로 직접 나타남). 정리 1의 세 욕구 중 둘을 완벽히 갖고 하나를 완전히 잃는 모서리해.
-4. 발표 지점 $c = 0.3$은 선택이지만 cherry-picking이 아니다: regime map 그림이 $c \in [10^{-4}, 2]$ 전체를 공개하며, 각 regime의 승자와 crossover가 그대로 보인다. 논문에도 map 전체를 싣는다.
-5. 한계: quadratic + 모드 독립 noise는 deep learning이 아니며, WSD cooldown 비율 (20%)을 키우면 강noise regime에서 WSD가 개선될 수 있다 ($c$-sweep과 cooldown-sweep의 2차원 map은 후속 작업). 이 층위는 명제 1과 Phase 2 사이의 다리이고, 최종 검증은 Phase 2다.
+1. Untuned toy에서 schedule별 loss curve deformation이 크게 달라진다. 이는 geometry가 observable trajectory를 바꿀 수 있다는 existence proof다.
+2. 같은 toy를 schedule별로 공정 튜닝하면 WSD가 대부분 regime을 지배하고 HyperbolicLR의 우위는 사라진다.
+3. 따라서 quadratic toy는 EH 또는 H의 neural-network 성능 우위를 지지하지 않는다.
+4. Dwell, sensitivity mass, noise regime을 deep-learning collapse의 원인으로 옮기지 않는다.
+5. 원고에서 이 결과를 쓴다면 coordinate illustration 또는 appendix negative control로만 쓴다.
 
-**Phase 2에 주는 검증 가능한 시그니처.** (i) 실제 task의 noise regime 추정: constant LR이 경쟁력 있으면 약noise, WSD가 압도하면 중간, hyperbolic이 따라잡거나 이기면 강noise. (ii) WSD 학습 곡선이 cooldown 위치에서 budget별로 갈라지는 패턴 (창 위치별 SLCD 분해로 검출). (iii) hyperbolic의 SLCD 우위가 noise 수준과 무관하게 유지되는지.
+Cross-budget 방법 주장은 toy가 아니라 동일 LR candidate grid와 독립 HPO 반복에서 직접 측정한다.
 
-### 7.1 공정 튜닝 후의 모습 (hardening, 2026-06-11)
+### 7.1 공정 튜닝 후 얻은 제한사항 (2026-06-11)
 
-위 3-regime 서사는 **untuned** 비교다 (WSD cooldown 20% 고정, constant는 $\eta_0$ 고정). 리뷰어가 가장 먼저 칠 곳이므로 모든 스케줄러에 하이퍼파라미터 튜닝을 허용하고 재실행했다 (`scripts/08_hardened_toy.py`: $\eta_0$ 전원 grid 10점, WSD cooldown $\in \{0.1..0.7\}$, hyperbolic $U \in \{210..600\}$, (noise, budget)별 독립 튜닝). 결과 (`figs/tuned_regime_map.png`):
+모든 schedule에 peak LR를 튜닝하고 WSD cooldown과 H의 $U$도 탐색한 결과 (`scripts/08_hardened_toy.py`, `figs/tuned_regime_map.png`):
 
-1. **튜닝된 WSD가 quadratic 세계의 대부분을 지배한다.** $N=200$ 기준 $c \in [5\times10^{-4}, 0.4]$ 전 구간 1위, 중간 noise에서 마진 12~57%. untuned에서 보였던 hyperbolic의 강noise 우승은 $c \gtrsim 0.9$의 마진 1% 미만 동률로 축소된다. constant의 영토는 $c \lesssim 10^{-3}$의 틈새로 줄어든다.
-2. **스펙트럼 robustness** ($\lambda_i = i^{-\alpha}$, $\alpha \in \{0.5, 1, 2\}$): 승자는 $\alpha$에 따라 WSD/Cosine/HyperbolicLR로 흔들리고 마진은 대부분 수 % 이내. quadratic 최종 성능에서 어떤 스케줄러의 일관 우위도 주장할 수 없다.
-3. **naive HPO transfer는 toy에서 변별력이 없다.** $N=50$에서 튜닝해 $N=200$에 재인스턴스 배포하는 프로토콜에서 cosine의 regret이 전 noise에서 0.00%다 (최적 $\eta_0$가 budget에 불변). hyperbolic은 0~5.8%로 오히려 열세. **이유**: 이 프로토콜은 "완주한 정확한 최종 loss"로 튜닝하므로, prefix invariance가 도움이 되는 실제 메커니즘 (부분 학습 곡선을 보고 내리는 튜닝 결정: Optuna pruning, early stopping, 저epoch HPO trial)이 toy에 존재하지 않는다.
+1. N=200의 대부분 noise 구간에서 WSD가 1위였고 HyperbolicLR의 untuned 우위는 사라졌다.
+2. 스펙트럼을 바꾸면 WSD, cosine, H 사이의 순위가 바뀌어 일관된 최종성능 우위가 없다.
+3. 완주한 final loss로 N=50에서 고른 peak LR를 N=200에 옮기는 단순 toy에서는 cosine regret도 0이 될 수 있다.
 
-**이 hardening이 논문에 주는 것.** (a) toy의 역할을 정직하게 한정한다: toy가 입증하는 것은 **insensitivity 메커니즘** (명제 1', SLCD 순서, WSD의 loss 영역 insensitivity 붕괴)이지 최종 성능 우위가 아니다. 최종 성능 우위 주장은 논문에서 하지 않는다 (parity가 목표). (b) Phase 2의 HPO transfer 프로토콜을 정밀화한다: 변별 메커니즘이 "부분 곡선 기반 튜닝 결정"이므로, **저epoch HPO (10 epochs/trial) + Optuna median pruning을 켠 상태에서 튜닝 → 전체 epoch 배포**가 올바른 프로토콜이다 (`run_all.py`의 기존 구조와 일치, pruning 활성화 확인 필요). cosine은 부분 곡선이 budget별로 다르게 보이므로 pruning이 좋은 구성을 잘못 죽이는 비율이 높아진다는 것이 검증 가설. (c) WSD 대비 차별점은 최종 성능이 아니라 insensitivity + anytime성이라는 포지셔닝이 확정된다.
+이 결과는 pruning을 켜야만 EH가 유리하다는 결론을 허용하지 않는다. Confirmatory protocol은 pruning을 끄고 B=10 final-window metric으로 설정을 고른 뒤 긴 horizon에 직접 배포한다. Pruning failure는 별도 연구 질문이다.
 
-### 7.2 Anytime 프로토콜: 두 번째 기둥의 정량화 (2026-06-11)
+### 7.2 Anytime 프로토콜: cross-budget 본문과 분리할 보조 결과 (2026-06-11)
 
 **게임 정의.** 중단 시점 $\tau \in [50, 200]$를 모르는 채로 각 스케줄러가 단 하나의 구성 (자기 하이퍼파라미터 + horizon 추정 $N_{plan}$, $t \ge N_{plan}$ 이후 마지막 LR 유지)을 사전에 commit하고 한 번 달린다. 평가는 anytime regret $R(\tau) = L(\tau)/L_{oracle}(\tau) - 1$, oracle은 $\tau$를 알고 전 패밀리를 튜닝한 최적. 각 contender는 자기 grid에서 **minimax regret**을 최소화하는 구성을 고른다 (전원 공정 튜닝). WSD는 stop (그냥 중단)과 branch (중단 요청 시 checkpoint에서 $0.2\tau$ cooldown 추가 실행) 두 변형. 구현: `scripts/09_anytime_protocol.py`, 그림: `figs/anytime_regret.png`.
 
@@ -207,12 +210,12 @@ robustness: $c=0.05$에서 minimax 순서 Hyperbolic 39% < Linear 43% < Cosine 5
 
 **Wide-window 검증 (2026-06-11, `scripts/14_wide_window.py`).** "기하 감쇠" 판정이 좁은 창의 아티팩트가 아닌지 $\tau \in [20, 640]$ (동적 범위 32배)에서 재검: 지수 fit residual 0.034 vs power-law ($t^{-1.18}$) fit residual 0.101로 **지수가 3배 우세**, log-log에서 뚜렷한 아래 굽음 (`figs/wide_window_shape.png`). 명제 3이 단일 모드의 답을 $1/(\lambda t)$로 확정했으므로, 다중 모드 (스펙트럼)에서 기하로 바뀌는 전이는 실재하는 현상이다 (왜 기하인지의 해석적 해명은 open). 부수 관찰: (i) 창 끝 직전 급강하는 경계 효과 (더 늦은 $\tau$가 없으므로 $\tau_{\max}$에 정면 annealing), (ii) $\tau$ grid 간격 5의 잔물결이 남아 sparse-grid 톱니와 dense 매끄러움 사이를 보간, (iii) 게임 값은 창 비율과 함께 증가 (4배 창 9.3% → 32배 창 16.7%). **정직성 경고**: family 기반 oracle이 true 최적 제어 oracle보다 $\tau=40/160/640$에서 1.8/3.3/14.3% 느슨함을 확인. 정성 결론 (순서, 모양)은 불변이나 논문의 최종 regret 수치는 true oracle로 재산출해야 한다.
 
-**함의.**
-1. **ExpHyperbolicLR의 승격**: 기하 감쇠의 anchored 폐형식 버전이 EH다 ($\log\eta$가 hyperbolic 곡선, $N_{plan} \to U$에서 정확히 기하). 지금까지 H의 변형으로 취급된 EH가 anytime 이론의 정답 형태에 가장 가까운 우리 방법이며, cosine 대비 anytime regret을 minimax 40%/mean 51% 줄인다. 논문에서 EH를 "horizon 불확실 환경의 권장 기본값"으로 전면 배치한다.
-2. **정직한 gap**: 명명 패밀리 최선 (21%)과 게임 값 (9.3%) 사이에 2배 격차가 남는다. free-form이 더 잘하는 구조는 $\tau_{\min}$ notch와 가변 log-기울기다. 이 gap의 폐형식 해는 open problem으로 명시하고, 새 스케줄러 설계 공간으로 제안한다.
-3. Phase 2의 anytime 실측에서 EH를 주 대상으로 승격하고, checkpoint 환경용 cyclic 변형 (CY는 코드에 이미 있음)을 부 대상으로 추가한다.
+**현재 논문에서의 해석.**
+1. ExpHyperbolicLR가 dense stop-time toy에서 명명 패밀리 중 mean regret 1위라는 결과는 log-space 설계의 보조 동기다. 실제 neural-network cross-budget superiority를 대신하지 않는다.
+2. 명명 패밀리 최선과 free-form game value 사이에는 2배 gap이 남는다. 이 gap과 checkpoint-synchronized sawtooth는 별도 schedule-design 문제다.
+3. Classification의 anytime 순위는 metric에 따라 뒤집혔으므로 Phase 2 anytime 표를 EH의 실증 근거로 쓰지 않는다.
 
-### 7.4 경로 A: anytime 게임의 해석적 구조와 문헌 포지셔닝 (2026-06-11)
+### 7.4 Stop-time spectral result와 선행연구 경계
 
 **명제 3 (단일 모드: anytime 긴장 부재).** 단일 곡률 $\lambda$, noise $\sigma^2$의 모드 동역학 $m_{t+1} = (1-\eta\lambda)^2 m_t + \eta^2\sigma^2$에서:
 (a) horizon $\tau$가 알려진 최적 제어는 greedy다 ($m_{t+1}$이 $m_t$에 단조이므로 DP가 단계별 최소화로 붕괴).
@@ -238,67 +241,81 @@ $$\frac{\partial J_\tau}{\partial \eta_t} = 2\sum_i w_i\,\Phi_i^{(\tau)}(t)\,B_i
 
 [수치 검증 2026-06-11: $\lambda = (0.5, 0.05)$, $\sigma_1^2 = 0.05$, $\tau = (60, 240)$에서 $V = 12.93\%$; $\tau_1$-최적 스케줄에서 $\eta_{\tau_1-1} = 0.056$ 내부, stationarity 잔차 $2\times10^{-12}$, $B_2 = -5.2\times10^{-4} < 0$, $w_1B_1 = -w_2B_2$ 정확히 균형, $F_1 = 5.9\times10^{-3} < F_2 = 6.0\times10^{-1}$ 엄격. (C)는 충분조건일 뿐이며 수치상 $V > 0$은 (C) 밖에서도 성립. 일반 스펙트럼 비 의존성: 비 $1, 4, 16, 64$에서 regret $0.00, 2.33, 5.67, 7.37\%$ (비 1의 0%는 명제 3의 대조군)]
 
-**귀결: §7.2~7.3에서 관찰된 모든 anytime 비용의 근원은 noise가 아니라 곡률 스펙트럼의 다양성이며, 이것이 이제 정리다.** 단일 곡률이면 비용이 정확히 0 (명제 3), 곡률이 둘 이상 갈라지는 순간 양수 (정리 4). Codex 리뷰가 "논문의 운명을 가르는 한 가지"로 지목한 항목이 해결되었다.
+**범위.** 이 정리는 정의된 quadratic stop-time game 안에서 단일 곡률과 다중 곡률을 구분한다. Neural-network cross-budget transfer 또는 EH의 우위를 증명하지 않으며, 현재 방법 논문에서는 appendix 결과다.
 
-**문헌 포지셔닝 (2026-06-11 조사).** anytime 학습 영역은 2025~26년에 급속히 점유되었다:
-- Schaipp, Hägele, Taylor, Şimşekli, Bach (ICML 2025, arXiv:2501.18965): 비매끄러운 convex bound로 WSD/cosine 거동, cooldown 최적 길이, 연장 학습 LR 전이를 재현. "convex 이론으로 스케줄 설명" 프레임 선점.
-- Anytime Pretraining (arXiv:2602.03702, 2026-02): constant/$1/\sqrt{t}$ + **weight averaging**으로 horizon-free하게 cosine 동급 달성 (150M~300M LM). 선형 회귀 minimax rate 이론.
-- ScheduleFree+ (arXiv:2605.19095, 2026-05): optimizer 쪽 anytime, 장기 학습에서 WSD 대비 큰 우위 주장.
+**문헌 포지셔닝.** Schedule transfer와 horizon-free training은 이미 점유된 문제다.
 
-**우리 기여의 생존 영역과 차별점**: (i) 이들은 점근 rate 이론이고, 우리는 **유한 창 minimax regret 게임** (oracle 대비 상수 수준의 정량화, equalizer 구조, 게임 값 계산)이다. (ii) averaging 계열이 강한 이유가 우리 프레임워크로 설명된다: 정리 1은 LR 궤적의 제약인데 averaging은 학습 LR과 평가 지점을 분리해 게임을 우회한다 (사실상 컴퓨트 무료 WSD-branch; WSD-branch regret 9.1% ≈ pure-schedule 게임 값 9.3%의 일치가 방증). (iii) 명제 3~4의 특성화 (단일 곡률 무긴장 / 스펙트럼 긴장)는 어느 문헌에도 없는 형태다. (iv) 방법 주장은 "averaging이 부적합한 환경 (drop-in 스케줄러, 메모리 제약, fine-tuning 파이프라인)에서의 pure-schedule 처방 = EH"로 한정한다.
+- Schaul et al. 2013은 noisy quadratic의 greedy optimal LR를 유도했다.
+- Ge et al. 2019는 least squares에서 geometric step decay의 near-optimality를 다뤘다.
+- REX는 training horizon을 알지 못하는 LR scheduling을 명시적으로 다뤘다.
+- Wen et al. 2024는 WSD의 branchable anytime 성질을 설명했다.
+- Power Scheduler와 2026년 WSqD는 training horizon이 바뀌어도 base phase를 재사용하는 직접 경쟁 방법이다.
+- Anytime Pretraining과 ScheduleFree+는 averaging 또는 optimizer state를 이용해 다른 방식으로 horizon 문제를 푼다.
 
-**Codex (GPT-5.5) 적대적 리뷰 반영 (2026-06-11).** 추가로 확인된 선행연구와 판정:
-- **Schaul et al. 2013** ("No more pesky learning rates"): noisy separable quadratic에서 greedy 최적 LR을 이미 유도. 명제 3의 greedy 부분은 재발견이고, 신규성은 "유한 horizon DP와의 동치 + zero anytime regret" 표현뿐. 명제 3은 정리가 아니라 **보조정리로 강등**하고 Schaul 인용 필수.
-- **Ge et al. 2019** (least squares에서 geometric step decay의 near-optimality, anytime final-iterate의 미묘함): §7.3의 "기하 감쇠 최적" 관찰과 직접 겹침. 우리 신규성은 "stop-time minimax 게임에서의" 기하 출현으로 한정해야 하며 Ge 인용 필수.
-- **Eigencurve** (Hessian 스펙트럼에서 스케줄 설계): "스펙트럼 인지 스케줄"의 선행. 명제 4의 신규성은 "스펙트럼 다양성 = anytime 비용의 원천"이라는 인과 특성화로 좁혀짐. **수치만으로는 부족, 정식 증명이 논문 운명을 가름** (Codex 평가: "the one thing that can make the paper more than empirical schedule archaeology").
-- **Wen et al. 2024 (arXiv:2410.05192)**: WSD의 branchable anytime성이 이미 명시적. 관찰 2/명제 2의 포지셔닝에 인용 필수.
-- **REX (arXiv:2107.04197)**: budget 미지 LR 스케줄링 문제 설정 선행. Phase 2 baseline에 추가.
-- 게임 정식화 (commit + 적대적 stop time + oracle regret + 유한 창 상수)는 Codex도 선행을 모름: **생존하는 핵심 신규성**. 단 $D+A\ge H$와 보존 법칙은 "측정 언어"로 강등 (tautological 공격 대응).
-- 제목 제안: "Committed Learning-Rate Schedules Under Horizon Uncertainty". EH는 "universal optimum"이 아니라 "closed-form drop-in approximation"으로 서술.
+따라서 EH의 신규성은 horizon-free 문제의 발견, geometric decay의 발견, 또는 유일성에 있지 않다. 주장 가능한 차이는 bounded shared-asymptote hyperbolic arc를 log LR에 적용한 구체적 방법, 그 closed-form coordinate, 그리고 동일 HPO protocol에서 측정한 fidelity와 utility다.
 
-## 8. 변분 관점: 솔직한 결론
+Stop-time minimax game과 spectral-tension theorem은 이 방법 주장과 논리적으로 독립이다. 현재 원고에서는 appendix 또는 별도 이론 논문으로 취급하고, 이론 novelty로 EH 실험 부족을 보상하지 않는다.
 
-"주어진 anchoring 예산에서 조기 deviation을 최소화하는 스케줄은 무엇인가"의 답은 hyperbolic이 아니다. **고정 master prefix + budget 의존 cooldown** (WSD와 그 일반화: prefix를 상수 대신 임의의 고정 감쇠 곡선으로) 구성이 조기 창 deviation을 정확히 $0$으로 만들면서 $A = 0$을 달성한다. 기하만 보면 조각적 구성이 변분 문제의 bang-bang 최적해다.
+## 8. 변분 관점과 EH 주장의 정확한 범위
 
-따라서 hyperbolic의 가치 주장은 "기하적 유일 최적"이 아니라 다음 조합이다: (i) 강단조 annealing을 유지하는 매끄러운 ($C^1$) 해 중에서 질량 총량과 조기 배치가 최소급, (ii) cooldown 트리거라는 이산 결정이 불필요 (WSD는 cooldown 시작 시점에서 사실상 budget을 알아야 한다: horizon 문제의 해소가 아니라 지연), (iii) 모든 좌표가 폐형식이라 $U$ 선택 시점에 비용을 사전 계산 가능, (iv) 어느 쪽이 실제 학습 성능 (HPO transfer, 최종 loss)에서 이기는지는 이론이 결정 못 하는 실증 질문이고 우리는 정확히 그것을 측정한다. 이 서술이 "왜 그냥 WSD를 쓰지 않는가"라는 리뷰어 공격에 대한 정면 답변이다.
+주어진 anchoring budget에서 prefix deviation만 최소화하면 hyperbolic이 답이 아니다. 고정 master prefix와 budget-dependent cooldown을 허용하면 조기 deviation 0과 exact anchoring을 함께 얻는 piecewise construction이 가능하다. 따라서 EH를 geometric optimum이나 유일한 horizon-free schedule로 부르지 않는다.
 
-미해결 질문 (논문에 명시): $C^1$ 강단조 패밀리로 제한했을 때, 주어진 $A$ 예산 하에서 조기 질량을 최소화하는 변분 문제의 해가 hyperbolic 형태인가. (점근선 공유 구조가 답일 것이라는 추측까지만.)
+EH의 방법 가치는 다음 조합에 있다.
 
-## 9. 이론이 예측하고 실험이 검증할 것
+1. 강단조이고 매끄러운 hyperbolic arc를 log LR에 적용한다.
+2. 하나의 bounded-horizon parameter $U$로 prefix deformation과 endpoint anchoring을 폐형식으로 계산할 수 있다.
+3. H와 달리 multiplicative scale에서 endpoint를 제어한다.
+4. E처럼 긴 run을 일찍 floor에 묶지 않으면서, rescaling schedule보다 작은 cross-budget deformation을 겨냥한다.
+5. 현재 DeepONet exploratory campaign에서 low-budget tuning fidelity, long-horizon utility, zero observed collapse를 함께 보였다.
 
-| 이론 | 예측 | 실험 |
+POW와 WSQD도 horizon-free base phase를 제공하므로 EH가 유일하다는 주장은 틀리다. 이론은 세 방법의 성능 순서를 정하지 못하며, 동일 candidate set과 replicated HPO가 판정해야 한다.
+
+미해결 질문은 $C^1$ 강단조 패밀리에서 주어진 log-space anchoring budget 아래 조기 log-deviation을 최소화하는 해가 shared-asymptote 구조인지다. 이 문제는 현재 원고의 필요조건이 아니며 추측으로만 남긴다.
+
+## 9. 이론 가설과 판정 실험
+
+| 설계 요소 | 사전 가설 | 판정 실험 |
 |---|---|---|
-| 명제 1, 1' + §6 | 조기 창 SLCD 순서: H/EH < WC/C/P/L | Phase 2 SLCD (5 seeds) |
-| §7.1(3) | 부분 곡선 기반 튜닝에서만 prefix invariance가 HPO transfer 이득으로 전환 | **HPO transfer (주 실험, 프로토콜 정밀화)**: 저epoch HPO + median pruning 활성 상태에서 튜닝 → 전체 epoch 배포. pruning 오살률 (좋은 구성이 잘못 잘리는 비율)을 스케줄러별로 측정 |
-| 정리 3(c) | $A(N)$ 큰 설정에서 정밀 수렴 손해 | 최종 성능 parity 검정, $A(N)$과 격차의 상관 |
-| 명제 2(a) | WSD의 SLCD: stable 구간 0, cooldown 창에서 점프 | 창 위치별 SLCD 분해 측정 (신규 분석, 추가 실험 불필요: 기존 학습 곡선 재분석) |
-| 정리 3(g) | $U$ 민감도는 $(1-\rho)$로 사전 예측 가능 | $U \in \{200,250,300,400\}$ ablation |
-| 정리 2 | 민감도 질량 배치가 학습 곡선 decoupling 위치를 결정 | 학습 곡선 차이의 시간 분포 vs $\partial_N\eta$ 프로파일 대조 |
+| Log-space hyperbolic geometry | EH의 B=10 최적 peak LR가 N 증가에 따라 덜 이동한다 | Fixed-shape LR response surface와 optimum-ridge drift |
+| Fidelity와 utility의 결합 | E는 fidelity만, rescaling 계열은 utility 또는 collapse, EH는 두 축의 Pareto corner에 놓인다 | Within-family transfer regret와 long-horizon utility |
+| Exponentiation | 같은 geometry에서 EH가 H보다 낮은 N=200 transfer loss를 보인다 | H 대 EH paired ablation |
+| Bounded horizon $U$ | EH 결론이 정확한 $U=N_{\max}$ 한 점에만 의존하지 않는다 | $U\in\{200,400,800\}$ |
+| Relative floor | Peak LR scale와 endpoint ratio를 분리하면 search boundary가 줄어든다 | $\eta_{\min}/\eta_0\in\{10^{-4},10^{-3},10^{-2}\}$ |
+| Architecture dependence | DeepONet 결과가 TFONet 또는 CIFAR ResNet에서 재현된다 | 독립 setting matrix와 HPO replicate |
 
-## 10. 논문 구조 (개정)
+다음은 더 이상 사전 가설이 아니다.
 
-1. **Introduction**: horizon 불확실성 → $D, A, H$ 세 욕구 → 정리 1 한 줄 → 기여: (i) 트레이드오프 부등식과 보존 법칙, (ii) 기존 스케줄러의 (질량, 배치) 분류, (iii) 폐형식 좌표를 갖는 매끄러운 해 HyperbolicLR, (iv) HPO transfer 실증.
-2. **The Tradeoff and the Conservation Law**: 정의, 명제 1, 정리 1, 정리 2, 따름정리들, 분류 표.
-3. **Hyperbolic Schedules as Smooth Mass Placement**: 보조정리 1~2, 정리 3, 명제 2와의 대조, §8의 솔직한 변분 논의.
-4. **Exact Dynamics**: §7의 quadratic 정확 동역학 (Figure 2 후보). 명제 1' 검증, tuned regime map (§7.1), anytime regret 프로토콜 (§7.2)까지 포함: toy 층위에서 두 기둥 (insensitivity, anytime)을 모두 정량화.
-5. **Experiments**: SLCD와 질량 배치 검증, pruning 기반 HPO transfer (주 결과 1), anytime regret 실측 (주 결과 2), 최종 성능 parity (WSD/SF/WC 포함), $U$ ablation.
-6. **Related Work**: 분류 표의 좌표로 통일 서술 (rescaling 계열, WSD/cooldown 계열, schedule-free/LR-free 계열, REX).
-7. **Limitations**: $A(N)$의 가격, 전체 창 비우위 사례, 변분 비최적성 (§8), toy에서의 WSD 우위 (§7), convex last-iterate 이론 (decay-to-zero 최적성)과의 긴장, 실험 스코프.
+- Dwell time 또는 sensitivity mass가 AdamW instability의 물리적 cause라는 주장.
+- $\eta\lambda_{\max}^{P}/38$ crossing이 collapse를 예측한다는 주장.
+- Normalization이 EH의 이점을 보존한다는 주장.
+- Anytime toy 순위가 classification 성능 순위를 예측한다는 주장.
 
-## 11. 남은 작업
+F24와 F26이 앞의 두 mechanism claim을 반증했다. 이 음성 결과는 limitations에 보고하고 새 proxy로 구조하지 않는다.
 
-이론 (실험 불필요):
-1. ~~정리 1 정량화~~ (완료: 삼각 부등식), ~~보존 법칙~~ (완료), ~~보조정리 2 증명~~ (완료), ~~WSD 정식화~~ (완료), ~~SLCD 구현 정합 확인~~ (완료).
-2. ~~$M(N)$ 폐형식 확인~~ (완료: log 표현으로 정리, 수치 전수 일치).
-3. 명제 1의 momentum/AdamW 확장 또는 "SGD에 한정" 명시 결정.
-4. ~~이론 그림~~ (완료: `paper/scripts/06_theory_figures.py` → `figs/theory_tradeoff_overview.png`. 4-panel: deviation 곡선, 민감도 밀도 배치, $A(N)$ 곡선, $M(N)$ 총량. 모든 곡선이 폐형식과 일치 확인: cosine/linear 0.5, WSD 0.8667, hyperbolic 0.3592).
-5. 변분 문제의 정확한 진술: $\mathcal{F} = \{C^1$ 강단조, $\eta_N(0)=\eta_0$, $A(N) \le \alpha\}$에서 $\inf_{\{\eta_N\} \in \mathcal{F}} \sup_{N_1<N_2 \le N_{\max}} D_{\beta N_1}(N_1, N_2)$의 최소해가 점근선 공유 (쌍곡선형) 구조인가. 조각적 패밀리를 허용하면 하한 $0$이 달성되므로 (§8) $C^1$ 강단조 제약이 본질적이다.
-6. ~~anytime성의 정식화~~ (완료: §7.2의 minimax anytime regret 프로토콜. toy에서 hyperbolic이 단일 런 1위 확인. Phase 2에서 동일 프로토콜을 실제 NN에 적용하는 것이 남은 작업: 중단 시점 grid에서 val loss 측정, WSD-branch는 cooldown 재실행 컴퓨트를 기록).
-7. ~~Part B의 0.00% regret이 grid 아티팩트인지 확인~~ (완료: 60점 fine grid에서도 cosine 0~1.1%, hyperbolic 2.5~5.4%로 결론 유지. 단 cosine 최적 $\eta_0$가 $c \le 0.3$에서 grid 상한 (1.9, 안정성 한계 2 직전)에 닿으므로 boundary 효과 명시 필요).
-8. (확인 완료, 작업 남음) `run_all.py`의 Optuna에 pruner가 **없음**을 확인 (2026-06-11 grep). 변별 메커니즘인 부분 곡선 기반 튜닝 결정이 현재 파이프라인에 부재. Phase 2 전에 MedianPruner 추가 + "pruning 오살률" 측정 코드 작성 (GPU 불필요한 코드 작업).
-9. (경로 A 파생) 논문 최종 regret 수치를 family oracle 대신 **true 최적 제어 oracle**로 재산출 (§7.3 경고 참조; free-form per-$\tau$ 최적화, 코드는 `scripts/14`의 `true_oracle_at` 재사용).
-10. ~~명제 4의 정식 증명~~ (**완료 2026-06-11**: 정리 4로 승격, Pontryagin식 1차 조건 충돌 논법, 전 단계 수치 검증. 남은 세부: (a) $\sigma_2^2 > 0$ 일반 케이스의 직접 증명 (현재는 연속성 따름정리), (b) 정량 하한 $V \ge f(\lambda_1/\lambda_2)$의 폐형식, (c) "스펙트럼 → 최적 모양" 사상은 open problem으로 명시).
-11. (Codex 리뷰 파생) 인용/포지셔닝 필수 추가: Schaul et al. 2013 (명제 3 greedy 선행), Ge et al. 2019 (geometric decay 선행), Eigencurve, Wen et al. 2024 (WSD anytime), REX. Phase 2 baseline에 REX와 D2Z (linear decay-to-zero) 추가 검토.
-12. (Codex 리뷰 파생) HPO 오살률의 정확한 정의 확정: "저budget에서 prune된 구성 중 full budget이면 top-k에 들었을 비율"을 스케줄러별로 측정. Hyperband/ASHA와의 차별점은 측정이지 게임 해석이 아님을 명시.
+## 10. 원고 배치
 
-실험 의존 (Phase 2 이후): §8의 표 전체.
+1. **Problem and protocol:** tuning budget, deployment horizon, fidelity, utility, transfer regret.
+2. **ExpHyperbolicLR:** H와 EH의 공통 hyperbolic arc, log-space exponentiation, relative floor, $U$.
+3. **Closed-form schedule coordinates:** $D^{\log}$, $A^{\log}$, sensitivity profile. 삼각관계와 보존 identity는 짧게 쓰고 증명은 appendix로 보낸다.
+4. **Direct comparators:** E, cosine, D2Z, WSD, Power Scheduler, WSqD.
+5. **Experiments:** fixed-shape landscape, replicated HPO, DeepONet, TFONet, CIFAR ResNet, H/EH와 $U$ ablation.
+6. **Scope:** geometry가 curve deformation은 설명하지만 optimizer instability mechanism은 설명하지 않는다고 명시한다.
+7. **Appendix:** 기존 exact dynamics, stop-time minimax game, spectral-tension theorem, 전체 baseline과 negative mechanism audit.
+
+## 11. 남은 이론 작업
+
+원고 필수:
+
+1. EH의 log-space 정의와 relative-floor parameterization을 논문 notation으로 고정한다.
+2. $D_T^{\log}$, $A^{\log}$, $H^{\log}$의 closed form을 H 좌표에서 정확히 옮기고 symbolic check를 다시 실행한다.
+3. $U$가 deployment horizon의 oracle 정보가 아니라 사전 upper bound라는 조건을 정리한다.
+4. Momentum과 AdamW에서 bridge proposition을 주장하지 않는다. 명제 1은 SGD 한정임을 본문에 명시한다.
+5. Power Scheduler와 WSqD를 같은 coordinate table에 넣되 성능 순서는 이론으로 주장하지 않는다.
+
+Appendix 또는 후속 작업:
+
+1. Stop-time regret를 true optimal-control oracle로 다시 계산한다.
+2. Spectral-tension theorem의 $\sigma_2^2>0$ 일반화와 정량 하한을 연구한다.
+3. Shared-asymptote variational problem을 정식화한다.
+
+실험 프로토콜과 성공 기준은 `PUBLICATION_PLAN.md` v13을 단일 기준으로 쓴다.
