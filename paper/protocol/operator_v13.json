@@ -1,0 +1,43 @@
+{
+  "dataset_group": "operator-grf-v13",
+  "generation": {
+    "generator": "paper/integral/src/main.rs",
+    "test_count": 1000,
+    "test_seed": 401033037,
+    "train_count": 8000,
+    "train_max_sigma": 1.8476835700587197,
+    "train_min_sigma": -1.8561571780003918,
+    "train_seed": 30377250,
+    "validation_count": 1000,
+    "validation_seed": 1570364571
+  },
+  "generation_sha256": "b40e0047d249f68dcaeb7d710e30808ab4935e7fd4c2305aebef8753f1aa3ac4",
+  "kind": "operator",
+  "protocol_hash": "efd5c3298b6490982731b2ff959d5825bb93b911a1b3808bc6aedefa6e968e22",
+  "split_hash": "200460a770ac808070076a442e8c851335e3f2a0d56a063be72df1aa6d90fb8b",
+  "splits": {
+    "test": {
+      "count": 1000,
+      "path": "test.parquet",
+      "sample_width": 100,
+      "sha256": "1ce7cdb7b4aea2a8e17f12a6fd054409dc222bc3c1680912ec19ee3d6d7e1ddb"
+    },
+    "train": {
+      "count": 8000,
+      "path": "train.parquet",
+      "sample_width": 100,
+      "sha256": "44add17f93011688eb5bc43b7e21fc34ca062485125121d43851c354c0c34911"
+    },
+    "validation": {
+      "count": 1000,
+      "path": "validation.parquet",
+      "sample_width": 100,
+      "sha256": "9edaad15774f0389131edc8f22822131667442ea08834cbbecd0e138b20ecb06"
+    }
+  },
+  "transform": {
+    "fit_split": "train",
+    "grf_scaling": "training extrema mean plus or minus one training standard deviation",
+    "model_input_standardization": null
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "dataset_group": "cifar10-v13",
+  "kind": "classification",
+  "protocol_hash": "efd5c3298b6490982731b2ff959d5825bb93b911a1b3808bc6aedefa6e968e22",
+  "source": "torchvision CIFAR10",
+  "source_files": {
+    "batches.meta": "f962466ef690d46b226450fb9aadc74ba4bc64a76aa526b5827fe4bc5c7125cb",
+    "data_batch_1": "54636561a3ce25bd3e19253c6b0d8538147b0ae398331ac4a2d86c6d987368cd",
+    "data_batch_2": "766b2cef9fbc745cf056b3152224f7cf77163b330ea9a15f9392beb8b89bc5a8",
+    "data_batch_3": "0f00d98ebfb30b3ec0ad19f9756dc2630b89003e10525f5e148445e82aa6a1f9",
+    "data_batch_4": "3f7bb240661948b8f4d53e36ec720d8306f5668bd0071dcb4e6c947f78e9682b",
+    "data_batch_5": "d91802434d8376bbaeeadf58a737e3a1b12ac839077e931237e0dcd43adcb154",
+    "test_batch": "f53d8d457504f7cff4ea9e021afcf0e0ad8e24a91f3fc42091b8adef61157831"
+  },
+  "split_hash": "84e91447a33503e402f8d4e4eb3f552fba47896b6071ed58e8f9581844a52581",
+  "split_seed": 756064530,
+  "splits": {
+    "test": {
+      "count": 10000,
+      "indices_sha256": "a74675bfed3834ac1c3140b2d7fb7d93d90a76608cc08515a5019a1cb2075ff4"
+    },
+    "train": {
+      "count": 45000,
+      "indices_sha256": "e20d48674ed3dd62e78de675cf84f6dec060244731c1d1d77fe7046f34b4c25b"
+    },
+    "validation": {
+      "count": 5000,
+      "indices_sha256": "a0d6eadf6a0e1d470c37831601b815d3f80be7aae914184196492c1bf64aa024"
+    }
+  },
+  "transforms": {
+    "train": [
+      "RandomCrop(32,padding=4)",
+      "RandomHorizontalFlip()",
+      "ToTensor()",
+      "Normalize((0.4914,0.4822,0.4465),(0.2023,0.1994,0.2010))"
+    ],
+    "validation_and_test": [
+      "ToTensor()",
+      "Normalize((0.4914,0.4822,0.4465),(0.2023,0.1994,0.2010))"
+    ]
+  }
+}

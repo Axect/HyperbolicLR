@@ -9,6 +9,7 @@ dependencies = [
  "dialoguer",
  "indicatif",
  "peroxide 0.40.2",
+ "rand 0.8.5",
  "rayon",
  "rugfield",
 ]

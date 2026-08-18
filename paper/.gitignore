@@ -7,3 +7,5 @@ data/*.parquet
 
 hyperbolic_lr.py
 *.tar.gz
+results_confirmatory*/
+data_confirmatory*/

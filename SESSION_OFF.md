@@ -1,37 +1,84 @@
-# SESSION_OFF — 2026-06-12
+# SESSION_OFF 2026-08-18
 
-## 현재 위치 (한 문장)
+## 현재 위치
 
-HyperbolicLR 출판 프로젝트는 이론 재프레이밍과 Phase 2 결정 실험을 모두 마치고 **GO 판정** 상태이며, 다음 작업은 논문 작성 (Phase 4~5)이다.
+HyperbolicLR 저널 프로젝트는 **ExpHyperbolicLR 방법 논문**으로 재정립되었다. 문제는 cross-budget HPO transfer다. 작은 budget에서 고른 설정을 긴 horizon에 그대로 배포할 때 tuning fidelity와 long-horizon utility를 함께 보존하는지가 핵심이다. G0 protocol freeze와 G1a deterministic dry campaign은 완료되었고, 다음 gate는 S1 full-data G1b다.
 
-## 이번 세션 구간 (2026-06-11 ~ 06-12)에서 완료된 것
+## 이번 구간에서 확정한 것
 
-1. **Phase 1**: WSD 스케줄러와 Schedule-Free AdamW를 실험 파이프라인에 추가 (`paper/scheduler_config.py`, `paper/util.py`의 train/eval 전환), 실데이터 dry run 통과. CIFAR-10/100은 토론토 서버 403 차단을 우회해 PaddlePaddle 미러에서 확보 (공식 md5 일치). `hyperbolic_lr.py`의 max_iter 초과 시 크래시 버그 수정 (클램프로 final LR 유지).
-2. **이론 재프레이밍** (`THEORY_REFRAMING.md`): 삼각 부등식 $D + A \ge H$, 민감도 질량 보존 법칙, 명제 1' (quadratic 타이트 bridge, tightness 0.98~1.00), 보조정리 3 (단일 모드 zero anytime regret = Robbins-Monro), **정리 4 (스펙트럼 긴장: 곡률 다양성이 anytime 비용의 근원, Pontryagin식 1차 조건 충돌로 완전 증명)**. free-form 최적해 계산: checkpoint 중단이면 톱니, 임의 중단이면 기하 감쇠 (32배 창에서 확인), EH가 명명 패밀리 중 최근접. Codex (GPT-5.5) 적대적 리뷰 반영 (Schaul 2013, Ge 2019, Eigencurve, Wen 2024, REX 포지셔닝; 제목 후보 "Committed Learning-Rate Schedules Under Horizon Uncertainty").
-3. **Phase 2 결정 실험** (vast.ai RTX 4070 Ti SUPER, 17.8h, $3.37, 인스턴스 파기 완료): 206개 학습 곡선 (`paper/results_phase2/`, partA 162 + partB 44). 판정:
-   - SLCD: H가 CIFAR/OSC 양 task에서 annealing 1위 → **통과**
-   - pruning 오살률: WSD 100% 오살 vs EH 0% (epoch 20+) → **통과**, 가장 인용 가치 높은 단일 결과
-   - anytime: 회귀 (OSC)에서 H/EH 1~2위 통과; CIFAR accuracy의 8pp 격차는 WH/WEH 보강 런으로 warmup 교란을 배제한 결과 **anchoring error의 실측 가격**으로 판명 = 정리 1 트레이드오프의 실제 딥러닝 확인
-   - 부수 발견: lr 0.01 + 무warmup 전 스케줄 발산 (Limitations용), SF의 val loss/acc 괴리 (overconfidence)
+1. **현재 DeepONet 결과:** `collider:~/HyperbolicLR/paper/results_extrap/integral-DeepONet/` 252 run에서 B=10 tuning, N=200 deployment 기준 EH가 관측 collapse 0/3, median final loss `1.2434816e-6`, B=10 대 B=50 selected-LR drift 4.7%를 함께 보였다. H, POW, WSQD보다 낮은 loss지만 HPO 선택은 scheduler-budget당 한 번이라 exploratory evidence다.
+2. **Full-budget 조건:** B=50에서 다시 튜닝하면 WSQD의 N=200 median final loss `1.2638153e-6`이 EH `3.4664359e-6`보다 낮다. EH의 사용 조건은 full-budget retuning이 어렵고 deployment horizon이 바뀌는 경우다.
+3. **Normalization campaign:** `collider:~/HyperbolicLR/paper/results_extrap/integral-DeepONetLN/` 81/81 run 완료. B=10 tuning의 N=200 median final loss는 L `1.132e-5`, P `1.956e-5`, EH `1.972e-5`다. EH가 단독 최선이 아니다. 여러 방법의 selected LR가 search lower bound `1e-4` 근처에 붙어 있으므로 corrected LR range로 S4를 재실행해야 한다.
+4. **Mechanism audit:** resolution-1 sharpness 재측정과 full 27-run pre-exposure audit에서 dwell 또는 AdamW `38/eta` crossing이 collapse를 예측하지 못했다. 정상 run이 crossing하고 collapse run이 crossing하지 않는 경우가 모두 있다. Dwell과 sensitivity mass는 schedule descriptor일 뿐 collapse mechanism으로 쓰지 않는다.
+5. **CIFAR 정정 유지:** 기존 8pp 격차는 scheduler별 LR를 튜닝하지 않은 fixed-lr0 결과다. Anchoring 가격이 아니다. Validation-loss anytime 순위도 과적합 때문에 accuracy와 반대로 움직여 classification 근거로 쓰지 않는다.
+6. **전략 문서 재작성:** `PUBLICATION_PLAN.md`를 v13으로 교체했다. EH novelty, 금지 주장, fixed-shape landscape, replicated HPO, setting matrix, metric, 통계, success gate, figure plan, 원고 구조를 한 문서에 고정했다.
+7. **이론 문서 재작성:** `THEORY_REFRAMING.md`를 v3으로 바꿨다. EH의 log-space coordinate를 중심에 놓고, `D+A>=H`와 conservation identity는 bookkeeping으로 강등했다. Stop-time minimax와 spectral theorem은 appendix 또는 별도 이론 논문으로 분리했다. EoS와 dwell 인과 주장은 폐기했다.
+
+## 논문의 현재 한 문장
+
+> ExpHyperbolicLR applies a bounded shared-asymptote hyperbolic arc in log learning-rate space to preserve low-budget hyperparameter choices while continuing to exploit longer training horizons.
+
+이 문장은 confirmatory experiment의 사전 가설이다. DeepONet, TFONet, CIFAR ResNet에서 독립 HPO 반복으로 통과하기 전에는 일반 사실로 쓰지 않는다.
+
+## Confirmatory protocol
+
+- Core methods: EH, H, E, POW, WSQD, C, D2Z, WSD.
+- Required settings: S1 DeepONet plus AdamW, S2 TFONet plus AdamW, S3 CIFAR ResNet-18 plus SGD momentum.
+- Confirmatory methods EH, H, POW, WSQD는 독립 HPO `R=12`, descriptive baselines E, C, D2Z, WSD는 `R=3`.
+- HPO budget은 10 epochs, scheduler와 replicate당 30 trials.
+- 선택 설정별 deployment seed는 `K=3`.
+- Horizons: 10, 50, 100, 200.
+- Pruner: `NopPruner()` 명시. Pruning kill-rate는 현재 논문 범위 밖이다.
+- Primary metrics: within-family transfer regret, long-horizon utility, N=200 held-out metric.
+- Inference unit: HPO replicate cluster. Deployment seed를 독립 HPO 표본으로 세지 않는다.
+- Direct confirmatory comparisons: EH 대 H, POW, WSQD. Holm correction.
+
+## 성공 기준
+
+1. S1의 EH transfer regret가 `0.1 log10` 이내이고 utility가 양수다.
+2. S2 또는 S3에서 같은 방향이 재현된다.
+3. EH가 H보다 개선되고 POW와 WSQD에 대해 사전 margin 안에서 non-inferior한 setting이 2개 이상이다.
+4. 결론이 한 HPO replicate, 한 deployment seed, 또는 `U=400` 한 점에 의존하지 않는다.
+
+Operator setting 두 개에서만 통과하면 제목과 주장을 neural operator로 좁힌다. S1만 통과하면 Machine Learning 제출을 중단한다. EH가 POW 또는 WSQD에 두 setting 이상 명확히 열위면 EH 단독 권장 주장을 버린다.
+
+## 다음 작업
+
+1. Confirmatory 구현을 한 clean commit으로 고정하고 origin과 collider의 `~/HyperbolicLR`에 배포한다.
+2. Collider에서 `_provision_confirmatory_v13.sh`를 실행해 environment lock, protocol hash, operator와 CIFAR source checksum, GPU 2개, clean working tree를 확인한다.
+3. S1 replicate 0 G1b HPO 240개를 두 lane으로 실행한 뒤 selection이 30-point grid endpoint에 붙지 않았는지 audit한다.
+4. Search-boundary gate를 통과하면 같은 replicate를 보존하고 `N in {10,200}`, `K=3` deployment 48개를 실행한다. Audit에서 expected-key set, provenance, test isolation, runtime을 확인한다.
+5. G1b를 통과하면 S1 Arm A 2,880 runs를 실행하고 transfer regret와 utility gate를 판정한다. 그 뒤에만 S1 full Arm B와 S2, S3를 순서대로 연다.
 
 ## 핵심 파일
 
-- `PUBLICATION_PLAN.md`: 전체 계획 + 진행 기록 v1~v10 (ground truth)
-- `THEORY_REFRAMING.md`: 이론 전체 (정의, 정리, 증명, 수치 검증, 문헌 포지셔닝, 논문 구조 §10, 남은 작업 §11)
-- `paper/scripts/06~15`: 이론 그림, toy 검증, free-form 최적화, Phase 2 분석
-- `paper/results_phase2/`: Phase 2 원자료 (재실행 불필요)
-- `paper/phase2_runner.py`, `phase2_orchestrate.py`: 실험 재현 코드 (resume-safe)
-- `paper/figs/`: 논문 그림 후보 8장 (theory_tradeoff_overview, exact_dynamics_*, tuned_regime_map, anytime_regret, dense_anytime, eh_anytime, wide_window_shape)
+- `PUBLICATION_PLAN.md`: v13 단일 전략 문서와 confirmatory protocol.
+- `THEORY_REFRAMING.md`: v3 EH 중심 이론과 appendix 경계.
+- `manuscript/v1_arxiv/`: arXiv v1 LaTeX 원본.
+- `paper/confirmatory_protocol.py`, `paper/protocol/confirmatory_v13.json`: frozen candidate grid, scheduler shape, seed blocks, metric, schema.
+- `paper/confirmatory_data.py`, `paper/protocol/operator_v13.json`, `paper/protocol/cifar10_v13.json`: split manifests와 byte checksum gate.
+- `paper/confirmatory_runner.py`: atomic single-run trainer와 provenance writer.
+- `paper/confirmatory_orchestrator.py`: production matrix, deterministic lane sharding, resume, selection, completeness와 provenance audit.
+- `paper/confirmatory_analysis.py`: cross-fitted Arm A metrics와 frozen confirmatory statistics.
+- `paper/_provision_confirmatory_v13.sh`, `paper/_run_confirmatory.sh`: collider preflight와 pueue entry points.
+- `collider:~/HyperbolicLR/paper/results_extrap/integral-DeepONet/`: 252-run 주 evidence.
+- `collider:~/HyperbolicLR/paper/results_extrap/integral-DeepONetLN/`: 81-run normalization ablation.
 
-## 다음 세션이 시작할 일 (우선순위순)
+## 금지 주장
 
-1. **논문 작성 착수** (Phase 5): `THEORY_REFRAMING.md` §10의 구조와 Codex 제안 제목으로 TMLR 양식 초안. 기존 arXiv tex 소스 위치 확인 필요 (Overleaf 추정, repo에 없음).
-2. Phase 2 결과의 통계 마감: 시드별 분산 표기, Wilcoxon 검정, OSC anytime의 log-loss 정규화 표 정리 (`scripts/15` 확장).
-3. $U \to N$ ablation 소규모 런 (anchoring 가격 경감 검증, CIFAR 18 runs 정도, 로컬 GPU 가능).
-4. 남은 이론 세부 (`THEORY_REFRAMING.md` §11): 정리 4의 $\sigma_2^2 > 0$ 직접 증명 (선택), true oracle 재산출 (toy regret 수치 최종화), run_all.py pruner 추가 (논문 외 인프라).
+- EH가 모든 task와 optimizer에서 최선이다.
+- EH만 horizon-free다.
+- Dwell 또는 EoS crossing이 collapse를 일으킨다.
+- CIFAR 8pp가 anchoring 가격이다.
+- `D+A>=H`가 강한 novelty theorem이다.
+- 한 HPO seed에서 얻은 결과를 deployment seed 수만큼 복제해 유의성을 만든다.
 
-## 주의사항
+## 호스트 정책
 
-- vast.ai 계정의 다른 인스턴스들 (ms_*, vatd_* 라벨 7개)은 다른 프로젝트 소속, 절대 건드리지 말 것.
-- `paper/results_phase2/`와 `paper/data/`는 gitignore 대상 점검 후 커밋 정리 필요 (현재 워킹트리에 Phase 1~2 코드 변경분 미커밋).
-- 논문의 주장 한계: 최종 성능 우위 주장 금지 (parity + 트레이드오프 지도화), anytime 방법 헤드라인은 averaging 계열에 양보하고 측정/특성화로 차별화.
+HyperbolicLR GPU 작업은 collider에서만 실행한다. Collider는 L40 2개이고 long-running worker는 pueue로 관리한다. Darkmatter와 collider는 `/home` NFS를 공유하지만 이 workstation의 local checkout과는 공유하지 않으므로 clean commit은 Git으로, ignored operator data는 rsync로 collider에 보낸다. Darkmatter의 Neural_Hamilton과 VaTD 작업은 건드리지 않는다.
+
+현재 collider에 실행 중인 HyperbolicLR worker는 없다.
+
+## Working tree
+
+이번 변경은 exploratory campaign, recovered arXiv source, confirmatory freeze의 세 logical commit으로 분리했다. Production runner는 dirty tree를 거부하므로 G1b는 이 commit들을 origin과 collider에 동기화한 뒤 시작한다.
