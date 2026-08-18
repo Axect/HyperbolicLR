@@ -1,8 +1,8 @@
-# SESSION_OFF 2026-08-18
+# SESSION_OFF 2026-08-19
 
 ## 현재 위치
 
-HyperbolicLR 저널 프로젝트는 **ExpHyperbolicLR 방법 논문**으로 재정립되었다. 문제는 cross-budget HPO transfer다. 작은 budget에서 고른 설정을 긴 horizon에 그대로 배포할 때 tuning fidelity와 long-horizon utility를 함께 보존하는지가 핵심이다. G0 protocol freeze와 G1a deterministic dry campaign은 완료되었고, 다음 gate는 S1 full-data G1b다.
+HyperbolicLR 저널 프로젝트는 **ExpHyperbolicLR 방법 논문**으로 재정립되었다. G0 protocol freeze, G1a deterministic dry campaign, S1 full-data G1b가 모두 통과했다. 현재 clean commit `71b4de0`에서 G2 S1 Arm A 2,880-run landscape를 collider L40 두 lane으로 실행 중이다.
 
 ## 이번 구간에서 확정한 것
 
@@ -13,6 +13,8 @@ HyperbolicLR 저널 프로젝트는 **ExpHyperbolicLR 방법 논문**으로 재�
 5. **CIFAR 정정 유지:** 기존 8pp 격차는 scheduler별 LR를 튜닝하지 않은 fixed-lr0 결과다. Anchoring 가격이 아니다. Validation-loss anytime 순위도 과적합 때문에 accuracy와 반대로 움직여 classification 근거로 쓰지 않는다.
 6. **전략 문서 재작성:** `PUBLICATION_PLAN.md`를 v13으로 교체했다. EH novelty, 금지 주장, fixed-shape landscape, replicated HPO, setting matrix, metric, 통계, success gate, figure plan, 원고 구조를 한 문서에 고정했다.
 7. **이론 문서 재작성:** `THEORY_REFRAMING.md`를 v3으로 바꿨다. EH의 log-space coordinate를 중심에 놓고, `D+A>=H`와 conservation identity는 bookkeeping으로 강등했다. Stop-time minimax와 spectral theorem은 appendix 또는 별도 이론 논문으로 분리했다. EoS와 dwell 인과 주장은 폐기했다.
+8. **G1b full-data gate:** S1 replicate 0에서 HPO 240개와 `N in {10,200}`, `K=3` deployment 48개를 완료했다. Expected key `288/288`, boundary selection 0개, non-finite 0개, audit hash `f52140a7f819a119a6e057ad9f19700053592aec6d4224f4efa6068c4732dd20`이다. Median runtime은 HPO trial당 `10.0685 s`, deployment epoch당 `1.0107 s`다.
+9. **G1b sanity result:** N=200 held-out median loss는 EH `4.1004e-6`, H `1.8924e-6`, D2Z `2.4851e-6`이고 EH utility는 `2.0521 log10`으로 양수다. 한 HPO replicate의 결과이므로 방법 우열로 해석하지 않는다. G2와 G3가 사전 정의된 추론 단위다.
 
 ## 논문의 현재 한 문장
 
@@ -44,11 +46,10 @@ Operator setting 두 개에서만 통과하면 제목과 주장을 neural operat
 
 ## 다음 작업
 
-1. Confirmatory 구현을 한 clean commit으로 고정하고 origin과 collider의 `~/HyperbolicLR`에 배포한다.
-2. Collider에서 `_provision_confirmatory_v13.sh`를 실행해 environment lock, protocol hash, operator와 CIFAR source checksum, GPU 2개, clean working tree를 확인한다.
-3. S1 replicate 0 G1b HPO 240개를 두 lane으로 실행한 뒤 selection이 30-point grid endpoint에 붙지 않았는지 audit한다.
-4. Search-boundary gate를 통과하면 같은 replicate를 보존하고 `N in {10,200}`, `K=3` deployment 48개를 실행한다. Audit에서 expected-key set, provenance, test isolation, runtime을 확인한다.
-5. G1b를 통과하면 S1 Arm A 2,880 runs를 실행하고 transfer regret와 utility gate를 판정한다. 그 뒤에만 S1 full Arm B와 S2, S3를 순서대로 연다.
+1. Collider의 `~/HyperbolicLR/v13/paper/results_confirmatory/arm-a/S1/`에서 2,880 expected key가 모두 찰 때까지 두 `setsid` lane을 유지한다.
+2. `~/HyperbolicLR/logs/g2_arm_a_watcher.log`와 `g2_arm_a.failed`를 확인한다. Watcher는 lane 종료 뒤 Arm A audit를 실행하고 `results_confirmatory/analysis/arm_a_S1.json`을 생성한다.
+3. G2 audit가 통과하면 EH Arm A transfer regret `<=0.1 log10`과 positive utility gate를 판정한다.
+4. G2 gate를 통과한 뒤에만 S1 full Arm B를 실행한다. S2와 S3는 S1 성공 뒤 독립적으로 연다.
 
 ## 핵심 파일
 
@@ -60,7 +61,7 @@ Operator setting 두 개에서만 통과하면 제목과 주장을 neural operat
 - `paper/confirmatory_runner.py`: atomic single-run trainer와 provenance writer.
 - `paper/confirmatory_orchestrator.py`: production matrix, deterministic lane sharding, resume, selection, completeness와 provenance audit.
 - `paper/confirmatory_analysis.py`: cross-fitted Arm A metrics와 frozen confirmatory statistics.
-- `paper/_provision_confirmatory_v13.sh`, `paper/_run_confirmatory.sh`: collider preflight와 pueue entry points.
+- `paper/_provision_confirmatory_v13.sh`, `paper/_run_confirmatory.sh`: collider preflight와 deterministic lane entry points.
 - `collider:~/HyperbolicLR/paper/results_extrap/integral-DeepONet/`: 252-run 주 evidence.
 - `collider:~/HyperbolicLR/paper/results_extrap/integral-DeepONetLN/`: 81-run normalization ablation.
 
@@ -75,10 +76,10 @@ Operator setting 두 개에서만 통과하면 제목과 주장을 neural operat
 
 ## 호스트 정책
 
-HyperbolicLR GPU 작업은 collider에서만 실행한다. Collider는 L40 2개이고 long-running worker는 pueue로 관리한다. Darkmatter와 collider는 `/home` NFS를 공유하지만 이 workstation의 local checkout과는 공유하지 않으므로 clean commit은 Git으로, ignored operator data는 rsync로 collider에 보낸다. Darkmatter의 Neural_Hamilton과 VaTD 작업은 건드리지 않는다.
+HyperbolicLR GPU 작업은 collider에서만 실행한다. Collider는 L40 2개이고 long-running worker는 `setsid`로 분리 실행한다. Darkmatter와 collider는 `/home` NFS와 pueue state를 공유하므로 collider에서 pueue daemon을 시작하지 않는다. 이 workstation의 local checkout은 공유하지 않으므로 clean commit은 Git으로, ignored operator data는 exact byte archive로 collider에 보낸다. Darkmatter의 Neural_Hamilton과 VaTD 작업은 건드리지 않는다.
 
-현재 collider에 실행 중인 HyperbolicLR worker는 없다.
+현재 collider에서 G2 Arm A lane 2개가 GPU 0과 1에서 실행 중이다. Expected count는 2,880이고 completion watcher가 audit와 cross-fitted analysis를 이어서 실행한다.
 
 ## Working tree
 
-이번 변경은 exploratory campaign, recovered arXiv source, confirmatory freeze의 세 logical commit으로 분리했다. Production runner는 dirty tree를 거부하므로 G1b는 이 commit들을 origin과 collider에 동기화한 뒤 시작한다.
+Exploratory campaign `7374984`, recovered arXiv source `0775af5`, confirmatory freeze `8d03fba`, tracked paper scheduler fix `71b4de0`을 origin에 push했다. G1b 기록 문서는 별도 docs commit으로 분리하고, collider production checkout은 G2가 끝날 때까지 `71b4de0` clean state를 유지한다.

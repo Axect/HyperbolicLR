@@ -305,9 +305,13 @@ G1a acceptance는 다음을 모두 요구한다: expected artifact key set 일�
 - `paper/protocol/operator_v13.json`과 `paper/protocol/cifar10_v13.json`은 각각 독립 operator split과 CIFAR-10 45k/5k/10k split을 동결한다. Runner는 새 run마다 manifest hash와 실제 source file checksum을 확인한다.
 - `paper/confirmatory_runner.py`는 한 run을 원자적으로 기록하고 `paper/confirmatory_orchestrator.py`는 phase별 expected-key set, deterministic lane sharding, resume, selection, search-boundary gate, artifact checksum, clean-commit provenance를 관리한다.
 - `paper/confirmatory_analysis.py`는 Arm A seed leave-one-out cross-fitting, transfer regret, utility, candidate rank correlation, paired cluster effect, exact sign-flip test, Holm correction, hierarchical BCa interval, sign test, leave-one-replicate-out sensitivity를 원자료에서 재계산한다.
-- Remote 실행 전 `_provision_confirmatory_v13.sh`로 환경과 data checksum을 검증하고, pueue lane은 `_run_confirmatory.sh <phase> <setting> <pilot|full> <horizons> <device> <lane/count>` 형식으로 시작한다.
+- Remote 실행 전 `_provision_confirmatory_v13.sh`로 환경과 data checksum을 검증하고, collider lane은 `_run_confirmatory.sh <phase> <setting> <pilot|full> <horizons> <device> <lane/count>`를 `setsid`로 분리 실행한다. Collider에서는 shared pueue state를 건드리지 않는다.
 
 G1a는 scheduler 8개, candidate 30개, HPO 240개와 deployment 48개를 합친 288-curve dry campaign으로 통과했다. 7개 job 뒤 중단한 run을 재개했을 때 `executed=281`, `skipped=7`, duplicate와 missing이 0이었고, 독립 replay의 manifest byte와 metric hash가 일치했다. 양쪽 audit hash는 `227c999442fd57753c3ec5381c4d29f860c4f86ccb882685a93bd159067ffd83`다.
+
+G1b는 clean commit `71b4de0`에서 통과했다. S1 replicate 0의 HPO 240개와 `N in {10,200}`, `K=3` deployment 48개가 모두 검증되어 expected key `288/288`, boundary selection 0개, non-finite outcome 0개였다. Audit hash는 `f52140a7f819a119a6e057ad9f19700053592aec6d4224f4efa6068c4732dd20`, median runtime은 HPO trial당 `10.0685 s`, deployment epoch당 `1.0107 s`다. 한 HPO lane이 224개 artifact 시점에 종료되었으나 동일 run ID로 resume한 뒤 duplicate와 missing 없이 audit를 통과했다.
+
+G1b의 단일 HPO replicate는 방법 우열을 판정하지 않는다. N=200 held-out median loss는 EH `4.1004e-6`, H `1.8924e-6`, D2Z `2.4851e-6`였고 EH utility는 `2.0521 log10`으로 양수였다. 이 결과는 full-data 범위와 파이프라인의 sanity check이며, EH 대 H, POW, WSQD 결론은 G2와 G3의 사전 정의된 반복 단위로만 낸다.
 
 ## 14. 타겟과 일정
 
@@ -331,4 +335,4 @@ G1a는 scheduler 8개, candidate 30개, HPO 240개와 deployment 48개를 합친
 - Sharpness resolution-1과 measured-dwell audit은 완결되었고 EoS mechanism을 반증했다.
 - DeepONetLN independent HPO campaign 81/81 run은 완료되었다. EH가 L과 P보다 근소하게 나빴고, 다수 scheduler의 HPO가 LR search lower bound에 붙었다. S4는 corrected range로 재실행한다.
 - HyperbolicLR GPU 작업은 collider에서만 실행한다. darkmatter의 다른 프로젝트 작업은 건드리지 않는다.
-- G0와 G1a는 완료되었다. 다음 작업은 clean commit을 collider에 배포하고 S1 replicate 0의 full-data G1b를 실행해 240개 HPO trial과 `N in {10,200}`의 48개 deployment run, search-boundary gate, task별 runtime을 확인하는 것이다.
+- G0, G1a, G1b는 완료되었다. G2 S1 Arm A 2,880-run landscape를 clean commit `71b4de0`에서 collider L40 두 lane으로 실행 중이며, 완료 후 expected-key audit와 seed leave-one-out cross-fitted transfer regret 및 utility를 계산한다.
